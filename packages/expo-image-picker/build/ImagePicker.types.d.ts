@@ -5,6 +5,13 @@ export declare enum MediaTypeOptions {
 }
 export declare type ImageInfo = {
     uri: string;
+    /**
+     * Web-only processing.
+     * Returns an image file.
+     *
+     * @type {File}
+     */
+    file?: File;
     width: number;
     height: number;
     type?: 'image' | 'video';

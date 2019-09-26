@@ -50,6 +50,7 @@ function openFileBrowserAsync({ mediaTypes, capture = false, allowsMultipleSelec
                     resolve({
                         cancelled: false,
                         uri,
+                        file: targetFile,
                         width: 0,
                         height: 0,
                     });
