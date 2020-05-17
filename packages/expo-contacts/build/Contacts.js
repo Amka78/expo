@@ -1,7 +1,9 @@
 import { UnavailabilityError } from '@unimodules/core';
 import { Platform, Share } from 'react-native';
-import UUID from 'uuid-js';
+import { PermissionStatus } from 'unimodules-permissions-interface';
+import uuidv4 from 'uuid/v4';
 import ExpoContacts from './ExpoContacts';
+export { PermissionStatus };
 export async function shareContactAsync(contactId, message, shareOptions = {}) {
     if (Platform.OS === 'ios') {
         const url = await writeContactToFileAsync({
@@ -82,7 +84,7 @@ export async function presentFormAsync(contactId, contact, formOptions = {}) {
         throw new UnavailabilityError('Contacts', 'presentFormAsync');
     }
     if (Platform.OS === 'ios') {
-        let adjustedOptions = formOptions;
+        const adjustedOptions = formOptions;
         if (contactId) {
             if (contact) {
                 contact = undefined;
@@ -109,7 +111,7 @@ export async function createGroupAsync(name, containerId) {
     if (!ExpoContacts.createGroupAsync) {
         throw new UnavailabilityError('Contacts', 'createGroupAsync');
     }
-    name = name || UUID.create().toString();
+    name = name || uuidv4();
     if (!containerId) {
         containerId = await getDefaultContainerIdAsync();
     }
@@ -157,6 +159,18 @@ export async function getContainersAsync(containerQuery) {
     }
     return await ExpoContacts.getContainersAsync(containerQuery);
 }
+export async function getPermissionsAsync() {
+    if (!ExpoContacts.getPermissionsAsync) {
+        throw new UnavailabilityError('Contacts', 'getPermissionsAsync');
+    }
+    return ExpoContacts.getPermissionsAsync();
+}
+export async function requestPermissionsAsync() {
+    if (!ExpoContacts.requestPermissionsAsync) {
+        throw new UnavailabilityError('Contacts', 'requestPermissionsAsync');
+    }
+    return await ExpoContacts.requestPermissionsAsync();
+}
 // Legacy
 export const PHONE_NUMBERS = 'phoneNumbers';
 export const EMAILS = 'emails';
@@ -175,6 +189,7 @@ export const SOCIAL_PROFILES = 'socialProfiles';
 export const IM_ADDRESSES = 'instantMessageAddresses';
 export const URLS = 'urlAddresses';
 export const DATES = 'dates';
+export const RAW_DATES = 'rawDates';
 export const RELATIONSHIPS = 'relationships';
 export const Fields = {
     ID: 'id',

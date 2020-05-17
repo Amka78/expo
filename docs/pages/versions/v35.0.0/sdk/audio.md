@@ -1,5 +1,6 @@
 ---
 title: Audio
+sourceCodeUrl: "https://github.com/expo/expo/tree/sdk-35/packages/expo-av"
 ---
 
 Provides basic sample playback and recording.
@@ -7,6 +8,12 @@ Provides basic sample playback and recording.
 Note that audio automatically stops if headphones / bluetooth audio devices are disconnected.
 
 Try the [playlist example app](https://expo.io/@documentation/playlist-example) (source code is [on GitHub](https://github.com/expo/playlist-example)) to see an example usage of the media playback API, and the [recording example app](https://expo.io/@documentation/record) (source code is [on GitHub](https://github.com/expo/audio-recording-example)) to see an example usage of the recording API.
+
+#### Platform Compatibility
+
+| Android Device | Android Emulator | iOS Device | iOS Simulator |  Web  |
+| ------ | ---------- | ------ | ------ | ------ |
+| ✅     |  ✅     | ✅     | ✅     | ✅    |
 
 ## Installation
 
@@ -208,7 +215,7 @@ The rest of the API for `Audio.Sound` is the same as the imperative playback API
 
 This class represents an audio recording. After creating an instance of this class, `prepareToRecordAsync` must be called in order to record audio. Once recording is finished, call `stopAndUnloadAsync`. Note that only one recorder is allowed to exist in the state between `prepareToRecordAsync` and `stopAndUnloadAsync` at any given time.
 
-Note that your experience must request audio recording permissions in order for recording to function. See the [`Permissions` module](../permissions/) for more details.
+Note that your experience must request audio recording permissions in order for recording to function. See the [`Permissions` module](../permissions/) for more details. Additionally, audio recording is [not supported in the iOS Simulator](../../workflow/ios-simulator/#limitations).
 
 #### Returns
 

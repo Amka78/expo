@@ -27,8 +27,8 @@ const STYLES_H2 = css`
   font-family: ${Constants.fonts.book};
   line-height: 1.75rem;
   font-size: 1.5rem;
-  margin-bottom: 1.8rem;
-  margin-top: 2rem;
+  margin-bottom: 1rem;
+  margin-top: 2.2rem;
   padding-bottom: 0.3rem;
   border-bottom: 1px solid ${Constants.colors.border};
 `;
@@ -47,7 +47,8 @@ const STYLES_H3 = css`
   margin-top: 2rem;
 
   code.inline {
-    background-color: ${Constants.colors.portage};
+    padding: 2px 4px;
+    top: 0;
     font-size: 1.1rem;
     line-height: 1.75rem;
   }

@@ -13,9 +13,7 @@ import android.os.Looper;
 import android.os.StrictMode;
 import android.os.UserManager;
 import android.provider.Settings;
-import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
 import com.facebook.common.internal.ByteStreams;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.stetho.Stetho;
@@ -29,7 +27,6 @@ import org.apache.commons.io.output.TeeOutputStream;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.spongycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -41,13 +38,10 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
-import java.security.Provider;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
@@ -135,10 +129,6 @@ public class Exponent {
 
     mContext = context;
     mApplication = application;
-
-    // Ensure Spongy Castle installed so the security providers don't change
-    // non-deterministically during the process's lifetime
-    Exponent.getBouncyCastleProvider();
 
     NativeModuleDepsProvider.initialize(application);
     NativeModuleDepsProvider.getInstance().inject(Exponent.class, this);
@@ -234,13 +224,14 @@ public class Exponent {
     return mGCMSenderId;
   }
 
-
+  // TODO: remove once SDK 35 is deprecated
   public interface PermissionsListener {
     void permissionsGranted();
 
     void permissionsDenied();
   }
 
+  // TODO: Remove everything connected with permissions once SDK35 is phased out
   private List<ActivityResultListener> mActivityResultListeners = new ArrayList<>();
   private PermissionsHelper mPermissionsHelper;
 
@@ -252,11 +243,6 @@ public class Exponent {
                                     ExperienceId experienceId, String experienceName) {
     mPermissionsHelper = new PermissionsHelper(experienceId);
     return mPermissionsHelper.requestPermissions(listener, permissions, experienceName);
-  }
-
-  public void requestExperiencePermissions(PermissionsListener listener, String[] permissions,
-                                           ExperienceId experienceId, String experienceName) {
-    new PermissionsHelper(experienceId).requestExperiencePermissions(listener, permissions, experienceName);
   }
 
   public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -296,28 +282,6 @@ public class Exponent {
   public Application getApplication() {
     return mApplication;
   }
-
-  public static void logException(Throwable throwable) {
-    if (!ExpoViewBuildConfig.DEBUG) {
-      try {
-        Crashlytics.logException(throwable);
-      } catch (Throwable e) {
-        Log.e(TAG, e.toString());
-      }
-    }
-  }
-
-  private static Provider sBouncyCastleProvider;
-
-  public static synchronized Provider getBouncyCastleProvider() {
-    if (sBouncyCastleProvider == null) {
-      sBouncyCastleProvider = new BouncyCastleProvider();
-      Security.insertProviderAt(sBouncyCastleProvider, 1);
-    }
-
-    return sBouncyCastleProvider;
-  }
-
 
   public String encodeExperienceId(final String manifestId) throws UnsupportedEncodingException {
     return URLEncoder.encode("experience-" + manifestId, "UTF-8");
@@ -592,13 +556,19 @@ public class Exponent {
         emulatorField.setAccessible(true);
         emulatorField.set(null, debuggerHostHostname);
 
-        Field debugServerHostPortField = fieldObject.rnClass().getDeclaredField("DEBUG_SERVER_HOST_PORT");
-        debugServerHostPortField.setAccessible(true);
-        debugServerHostPortField.set(null, debuggerHostPort);
+        // TODO: remove when SDK 35 is phased out
+        if (ABIVersion.toNumber(sdkVersion) < ABIVersion.toNumber("36.0.0")) {
+          Field debugServerHostPortField = fieldObject.rnClass().getDeclaredField("DEBUG_SERVER_HOST_PORT");
+          debugServerHostPortField.setAccessible(true);
+          debugServerHostPortField.set(null, debuggerHostPort);
 
-        Field inspectorProxyPortField = fieldObject.rnClass().getDeclaredField("INSPECTOR_PROXY_PORT");
-        inspectorProxyPortField.setAccessible(true);
-        inspectorProxyPortField.set(null, debuggerHostPort);
+          Field inspectorProxyPortField = fieldObject.rnClass().getDeclaredField("INSPECTOR_PROXY_PORT");
+          inspectorProxyPortField.setAccessible(true);
+          inspectorProxyPortField.set(null, debuggerHostPort);
+        } else {
+          fieldObject.callStatic("setDevServerPort", debuggerHostPort);
+          fieldObject.callStatic("setInspectorProxyPort", debuggerHostPort);
+        }
 
         builder.callRecursive("setUseDeveloperSupport", true);
         builder.callRecursive("setJSMainModulePath", mainModuleName);
@@ -662,9 +632,23 @@ public class Exponent {
     void handleUnreadNotifications(JSONArray unreadNotifications);
   }
 
-  public boolean shouldRequestDrawOverOtherAppsPermission() {
+  // TODO: remove once SDK 35 is deprecated
+  public boolean shouldRequestDrawOverOtherAppsPermission(String sdkVersion) {
+    if (sdkVersion != null && ABIVersion.toNumber(sdkVersion) >= ABIVersion.toNumber("36.0.0")) {
+      return false;
+    }
     return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(mContext));
   }
+
+  // TODO: remove once SDK 35 is deprecated
+  public boolean shouldAlwaysReloadFromManifest(String sdkVersion) {
+    if (sdkVersion == null || ABIVersion.toNumber(sdkVersion) >= ABIVersion.toNumber("36.0.0")) {
+      return true;
+    }
+
+    return false;
+  }
+
 
   public void preloadManifestAndBundle(final String manifestUrl) {
     try {

@@ -1,32 +1,37 @@
 ---
-title: Getting to know Expo
+title: API Reference
 ---
 
-import Video from '../../../components/plugins/Video'
+import TerminalBlock from '~/components/plugins/TerminalBlock';
 
-Welcome to the documentation for [Expo](http://expo.io) -- a set of tools and services for building, deploying, and quickly iterating on native iOS, Android, and web apps from the same codebase. The tools we provide are the Expo client app, CLI, SDK, and Snack. The services are build, update, and notify.
+The Expo SDK provides access to device and system functionality such as contacts, camera, and GPS location. You install modules from the Expo SDK using `expo-cli` with the `expo install` command:
 
-There are two ways to build a project with Expo, we call these workflows: you can use the "managed" workflow or the "bare" workflow. With the "managed" workflow, you only write JavaScript and lean on the [Expo SDK](sdk/overview/) to give you access to your device capabilities and the Expo services to handle the heavy lifting of building your app binary and uploading it to the store, all without you touching Xcode or Android Studio. With the "bare" workflow, we also speed up your development with the [Expo SDK](sdk/overview/) and React Native, and you have full control over your iOS and Android projects.
+<TerminalBlock cmd={['expo install expo-camera expo-contacts expo-sensors']} />
 
-<Video file="introduction.mp4" loop={false} />
+<br />
 
-> *Look at that, the same React code using TypeScript running natively on iOS, Android, and web! This is what Expo is all about &mdash; providing a universal platform for React*
+You can import modules from it in your JavaScript code as follows:
 
-## More about the Expo SDK
+```javascript
+import { Camera } from 'expo-camera';
+import * as Contacts from 'expo-contacts';
+import { Gyroscope } from 'expo-sensors';
+```
 
-The Expo SDK is a set of libraries written natively for each platform which provides access to the device's system functionality (things like the camera, push notifications, contacts, local storage, and other hardware and operating system APIs) from JavaScript. The SDK is designed to smooth out differences in platforms as much as possible, which makes your project very portable because it can run in any native environment containing the Expo SDK.
+This allows you to write [`Contacts.getContactsAsync()`](sdk/contacts/#getcontactsasync), for example.
 
-Expo also provides UI components to handle a variety of use-cases that almost all apps will cover but are not built into React Native core, e.g. icons, blur views, and more.
+## These packages work in bare React Native apps too
 
-## Considering using Expo?
+The easiest way to create a bare React Native app with support for the Expo SDK is `npx create-react-native-app myapp`. If you have an existing app that you would like to add Expo SDK packages to, read about [integrating into existing apps](../../bare/existing-apps/).
 
-- If you'd like an overview of what Expo offers, you might want to familiarize yourself with the [lifecycle of an Expo project](introduction/managed-vs-bare/), which describes how you go from square one to a production iOS and Android app.
-- For further explanation, it's also good to check out the [Frequently Asked Questions](introduction/faq/).
+## Each Expo SDK version depends on a React Native version
 
-## Ready to get started?
+Every quarter there is a new Expo SDK release that typically updates to the latest stable version of React Native and includes a variety of bugfixes, features and improvements to the Expo SDK. It's often useful to know what version of React Native your Expo project is running on, so the following table maps Expo SDK versions to their included React Native version.
 
-- Head over to [Installation](introduction/installation/) to grab our tools and have a look around.
-- Make your first project by following the [Up and Running](workflow/up-and-running/) guide.
-- If you're not already familiar with React and React Native, you can bootstrap your knowledge with [React Native Express](http://www.reactnativeexpress.com/).
-- For hands-on React Native projects from beginner to advanced, check out [Fullstack React Native](https://www.fullstackreact.com/react-native/), a (paid) book by the author of React Native Express.
-- Join our [Community](introduction/community/) and let us know what you're working on!
+| Expo SDK Version | React Native Version |
+| ---------------- | :------------------: |
+| 37.0.0           |        0.61.4        |
+| 36.0.0           |        0.61.4        |
+| 35.0.0           |        0.59.8        |
+| 34.0.0           |        0.59.8        |
+| 33.0.0           |        0.59.8        |

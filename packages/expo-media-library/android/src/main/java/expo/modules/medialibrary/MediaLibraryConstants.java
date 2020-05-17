@@ -21,8 +21,8 @@ final class MediaLibraryConstants {
   static final String ERROR_IO_EXCEPTION = "E_IO_EXCEPTION";
   static final String ERROR_NO_PERMISSIONS = "E_NO_PERMISSIONS";
   static final String ERROR_NO_PERMISSIONS_MESSAGE = "Missing CAMERA_ROLL permissions.";
-  static final String ERROR_NO_PERMISSIONS_MODULE = "E_NO_PERMISSIONS_MODULE";
-  static final String ERROR_NO_PERMISSIONS_MODULE_MESSAGE = "Permissions module not found. Are you sure that Expo modules are properly linked?";
+  static final String ERROR_NO_WRITE_PERMISSION_MESSAGE = "Missing CAMERA_ROLL write permission.";
+  static final String ERROR_NO_FILE_EXTENSION = "E_NO_FILE_EXTENSION";
 
   static final String MEDIA_TYPE_AUDIO = "audio";
   static final String MEDIA_TYPE_PHOTO = "photo";
@@ -56,8 +56,8 @@ final class MediaLibraryConstants {
       put(SORT_BY_CREATION_TIME, MediaStore.Images.Media.DATE_TAKEN);
       put(SORT_BY_MODIFICATION_TIME, MediaStore.Images.Media.DATE_MODIFIED);
       put(SORT_BY_MEDIA_TYPE, MediaStore.Files.FileColumns.MEDIA_TYPE);
-      put(SORT_BY_WIDTH, MediaStore.Images.Media.WIDTH);
-      put(SORT_BY_HEIGHT, MediaStore.Images.Media.HEIGHT);
+      put(SORT_BY_WIDTH, MediaStore.MediaColumns.WIDTH);
+      put(SORT_BY_HEIGHT, MediaStore.MediaColumns.HEIGHT);
       put(SORT_BY_DURATION, MediaStore.Video.VideoColumns.DURATION);
     }
   };
@@ -70,8 +70,8 @@ final class MediaLibraryConstants {
       MediaStore.Files.FileColumns.DISPLAY_NAME,
       MediaStore.Images.Media.DATA,
       MediaStore.Files.FileColumns.MEDIA_TYPE,
-      MediaStore.Images.Media.WIDTH,
-      MediaStore.Images.Media.HEIGHT,
+      MediaStore.MediaColumns.WIDTH,
+      MediaStore.MediaColumns.HEIGHT,
       MediaStore.Images.Media.DATE_TAKEN,
       MediaStore.Images.Media.DATE_MODIFIED,
       MediaStore.Images.Media.LATITUDE,

@@ -15,9 +15,11 @@
 #import "EXScopedSegment.h"
 #import "EXScopedLocalAuthentication.h"
 #import "EXScopedBranch.h"
+#import "EXScopedErrorRecoveryModule.h"
+#import "EXScopedFacebook.h"
+#import "EXScopedFirebaseCore.h"
 
 #import "EXScopedReactNativeAdapter.h"
-#import "EXModuleRegistryBinding.h"
 #import "EXExpoUserNotificationCenterProxy.h"
 
 #if __has_include(<EXTaskManager/EXTaskManager.h>)
@@ -33,6 +35,14 @@
 #if __has_include(<EXConstants/EXConstantsService.h>)
   EXConstantsBinding *constantsBinding = [[EXConstantsBinding alloc] initWithExperienceId:experienceId andParams:params];
   [moduleRegistry registerInternalModule:constantsBinding];
+#endif
+
+#if __has_include(<EXFacebook/EXFacebook.h>)
+  // only override in Expo client
+  if ([params[@"constants"][@"appOwnership"] isEqualToString:@"expo"]) {
+    EXScopedFacebook *scopedFacebook = [[EXScopedFacebook alloc] initWithExperienceId:experienceId andParams:params];
+    [moduleRegistry registerExportedModule:scopedFacebook];
+  }
 #endif
 
 #if __has_include(<EXFileSystem/EXFileSystem.h>)
@@ -99,13 +109,19 @@
   [moduleRegistry registerInternalModule:taskManagerModule];
   [moduleRegistry registerExportedModule:taskManagerModule];
 #endif
+  
+#if __has_include(<EXErrorRecovery/EXErrorRecoveryModule.h>)
+  EXScopedErrorRecoveryModule *errorRecovery = [[EXScopedErrorRecoveryModule alloc] initWithExperienceId:experienceId];
+  [moduleRegistry registerExportedModule:errorRecovery];
+#endif
+  
+#if __has_include(<EXFirebaseCore/EXFirebaseCore.h>)
+  EXScopedFirebaseCore *firebaseCoreModule = [[EXScopedFirebaseCore alloc] initWithExperienceId:experienceId andConstantsBinding:constantsBinding];
+  [moduleRegistry registerExportedModule:firebaseCoreModule];
+  [moduleRegistry registerInternalModule:firebaseCoreModule];
+#endif
 
   return moduleRegistry;
-}
-
-- (NSArray<id<RCTBridgeModule>> *)extraModulesForModuleRegistry:(UMModuleRegistry *)moduleRegistry
-{
-  return [[super extraModulesForModuleRegistry:moduleRegistry] arrayByAddingObject:[[EXModuleRegistryBinding alloc] initWithModuleRegistry:moduleRegistry]];
 }
 
 @end

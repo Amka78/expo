@@ -10,19 +10,15 @@ import isIPhoneX from '../utils/isIPhoneX';
 
 export default class BarCodeScreen extends React.Component {
   static navigationOptions = {
-    header: null,
+    headerShown: false,
   };
 
   state = {
     scannerIsVisible: true,
   };
 
-  _hasOpenedUrl: boolean;
-  _isMounted: boolean;
-
-  componentWillMount() {
-    this._hasOpenedUrl = false;
-  }
+  _hasOpenedUrl = false;
+  _isMounted = false;
 
   componentDidMount() {
     this._isMounted = true;

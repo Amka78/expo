@@ -1,27 +1,25 @@
 import './Expo.fx';
 
-import * as AR from './AR';
-import * as ErrorRecovery from './ErrorRecovery/ErrorRecovery';
-import * as Logs from './logs/Logs';
-import * as ScreenOrientation from './ScreenOrientation/ScreenOrientation';
-import * as Updates from './Updates/Updates';
-import * as SplashScreen from './launch/SplashScreen';
+import * as Linking from 'expo-linking';
 
-export { ErrorRecovery };
+import * as AR from './AR';
+import * as SplashScreen from './launch/SplashScreen';
+import * as Logs from './logs/Logs';
+
+export { Linking };
 export { Logs };
 export { default as apisAreAvailable } from './apisAreAvailable';
 export { default as registerRootComponent } from './launch/registerRootComponent';
-export { default as Linking } from './Linking/Linking';
 export { default as Notifications } from './Notifications/Notifications';
 
 // The following should all be extracted from this package
 export { AR };
-export { ScreenOrientation };
 export { SplashScreen };
-export { Updates };
 export { default as AppLoading } from './launch/AppLoading';
-export { default as AuthSession } from './AuthSession';
 export { default as DangerZone } from './DangerZone';
+
+// @ts-ignore
+export { Updates } from './deprecated';
 
 // @ts-ignore
 export {
@@ -134,6 +132,8 @@ export {
   // @ts-ignore
   Random,
   // @ts-ignore
+  ScreenOrientation,
+  // @ts-ignore
   SecureStore,
   // @ts-ignore
   Segment,
@@ -164,18 +164,3 @@ export {
   // @ts-ignore
   WebView,
 } from './removed';
-
-declare var module: any;
-
-if (module && module.exports) {
-  if (global) {
-    const globals = require('./globals');
-
-    // @ts-ignore
-    global.__exponent = globals;
-    // @ts-ignore
-    global.__expo = globals;
-    // @ts-ignore
-    global.Expo = globals;
-  }
-}

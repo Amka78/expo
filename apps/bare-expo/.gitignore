@@ -24,12 +24,7 @@ project.xcworkspace
 
 # Android/IntelliJ
 #
-build/
-.idea
-.gradle
-local.properties
-*.iml
-sdcard.img
+# handled inside `android` folder
 
 # node.js
 #
@@ -61,3 +56,5 @@ ios/build
 /android/app/build
 
 /scripts/start.command
+
+/artifacts

@@ -1,54 +1,37 @@
-import { MaterialIcons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import React from 'react';
-import {
-  Alert,
-  Button,
-  FlatList,
-  Linking,
-  PixelRatio,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableHighlight,
-  TouchableNativeFeedback,
-  View,
-} from 'react-native';
-import SafeAreaView from 'react-native-safe-area-view';
+import { Alert, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeArea } from 'react-native-safe-area-context';
 
-import { getTestModules } from '../TestUtils';
+import { getTestModules } from '../TestModules';
+import PlatformTouchable from '../components/PlatformTouchable';
+import Colors from '../constants/Colors';
 
-class ListItem extends React.Component {
-  onPress = () => {
-    this.props.onPressItem(this.props.id);
-  };
-
-  renderView = () => {
-    const checkBox = this.props.selected ? 'check-box' : 'check-box-outline-blank';
-    return (
-      <View style={styles.listItem}>
-        <MaterialIcons name={checkBox} size={26} />
-        <Text style={styles.label}>{this.props.title}</Text>
-      </View>
-    );
-  };
-
-  render() {
-    return Platform.select({
-      android: (
-        <TouchableNativeFeedback onPress={this.onPress}>
-          {this.renderView()}
-        </TouchableNativeFeedback>
-      ),
-      default: (
-        <TouchableHighlight onPress={this.onPress} underlayColor="lightgray">
-          {this.renderView()}
-        </TouchableHighlight>
-      ),
-    });
+function ListItem({ title, onPressItem, selected, id }) {
+  function onPress() {
+    onPressItem(id);
   }
+
+  return (
+    <PlatformTouchable onPress={onPress}>
+      <View style={styles.listItem}>
+        <Text style={styles.label}>{title}</Text>
+        <MaterialCommunityIcons
+          color={selected ? Colors.tintColor : 'black'}
+          name={selected ? 'checkbox-marked' : 'checkbox-blank-outline'}
+          size={24}
+        />
+      </View>
+    </PlatformTouchable>
+  );
 }
 
 export default class SelectScreen extends React.PureComponent {
+  state = {
+    selected: new Set(),
+    modules: [],
+  };
+
   constructor(props) {
     super(props);
 
@@ -66,15 +49,10 @@ export default class SelectScreen extends React.PureComponent {
         ) {
           console.log('Caught require error');
         } else {
-          global.expoErrorDelegate.throw(error, isFatal);
           originalErrorHandler(error, isFatal);
         }
       });
     }
-    this.modules = getTestModules();
-    this.state = {
-      selected: new Set(),
-    };
   }
 
   componentWillUnmount() {
@@ -82,24 +60,37 @@ export default class SelectScreen extends React.PureComponent {
   }
 
   checkLinking = incomingTests => {
-    if (incomingTests) {
-      const testNames = incomingTests.split(',').map(v => v.trim());
-      const selected = this.modules.filter(m => testNames.includes(m.name));
-      if (!selected.length) {
-        console.log('[TEST_SUITE]', 'No selected modules', testNames);
-      }
-      this.props.navigation.navigate('RunTests', {
-        selected: this.modules.filter(m => testNames.includes(m.name)),
-      });
-    }
+    const testNames = incomingTests.split(',').map(v => v.trim());
+    this.props.navigation.navigate('RunTests', { selected: new Set(testNames) });
   };
 
   _handleOpenURL = ({ url }) => {
-    setTimeout(() => {
-      if (url && url.includes('select/')) {
-        this.checkLinking(url.split('/').pop());
+    url = url || '';
+    // TODO: Use Expo Linking library once parseURL is implemented for web
+    if (url.includes('/select/')) {
+      const selectedTests = url.split('/').pop();
+      if (selectedTests) {
+        this.checkLinking(selectedTests);
+        return;
       }
-    }, 100);
+    }
+
+    if (url.includes('/all')) {
+      // Test all available modules
+      this.props.navigation.navigate('RunTests', {
+        selected: new Set(getTestModules().map(m => m.name)),
+      });
+      return;
+    }
+
+    // Application wasn't started from a deep link which we handle. So, we can load test modules.
+    this._loadTestModules();
+  };
+
+  _loadTestModules = () => {
+    this.setState({
+      modules: getTestModules(),
+    });
   };
 
   componentDidMount() {
@@ -108,24 +99,15 @@ export default class SelectScreen extends React.PureComponent {
     Linking.getInitialURL()
       .then(url => {
         this._handleOpenURL({ url });
-        // TODO: Use Expo Linking library once parseURL is implemented for web
-        if (url && url.indexOf('/all') > -1) {
-          // Test all available modules
-          this.props.navigation.navigate('RunTests', {
-            selected: this.modules,
-          });
-        }
       })
       .catch(err => console.error('Failed to load initial URL', err));
   }
 
   static navigationOptions = {
-    title: 'Test Suite',
+    title: 'Expo Test Suite',
   };
 
-  _keyExtractor = (item, index) => {
-    return `${index}-${item.name}`;
-  };
+  _keyExtractor = ({ name }) => name;
 
   _onPressItem = id => {
     this.setState(state => {
@@ -136,32 +118,26 @@ export default class SelectScreen extends React.PureComponent {
     });
   };
 
-  _renderItem = ({ item }) => (
+  _renderItem = ({ item: { name } }) => (
     <ListItem
-      id={item.name}
+      id={name}
       onPressItem={this._onPressItem}
-      selected={this.state.selected.has(item.name)}
-      title={item.name}
+      selected={this.state.selected.has(name)}
+      title={name}
     />
   );
 
   _selectAll = () => {
     this.setState(state => {
-      if (state.selected.size === this.modules.length) {
+      if (state.selected.size === this.state.modules.length) {
         return { selected: new Set() };
       }
-      return { selected: new Set(this.modules.map(item => item.name)) };
+      return { selected: new Set(this.state.modules.map(item => item.name)) };
     });
   };
 
-  _getSelected = () => {
-    const selected = this.state.selected;
-    const selectedModules = this.modules.filter(m => selected.has(m.name));
-    return selectedModules;
-  };
-
   _navigateToTests = () => {
-    const selected = this._getSelected();
+    const { selected } = this.state;
     if (selected.length === 0) {
       Alert.alert('Cannot Run Tests', 'You must select at least one test to run.');
     } else {
@@ -171,57 +147,98 @@ export default class SelectScreen extends React.PureComponent {
   };
 
   render() {
-    const allSelected = this.state.selected.size === this.modules.length;
+    const { selected } = this.state;
+    const allSelected = selected.size === this.state.modules.length;
     const buttonTitle = allSelected ? 'Deselect All' : 'Select All';
     return (
-      <View style={styles.mainContainer}>
+      <React.Fragment>
         <FlatList
-          data={this.modules}
+          data={this.state.modules}
           extraData={this.state}
           keyExtractor={this._keyExtractor}
           renderItem={this._renderItem}
+          initialNumToRender={15}
         />
-        <SafeAreaView style={styles.buttonRow}>
-          <View style={styles.buttonContainer}>
-            <Button title={buttonTitle} onPress={this._selectAll} />
-          </View>
-          <View style={styles.buttonContainer}>
-            <Button title="Run Tests" onPress={this._navigateToTests} />
-          </View>
-        </SafeAreaView>
-      </View>
+        <Footer
+          buttonTitle={buttonTitle}
+          canRunTests={selected.size}
+          onRun={this._navigateToTests}
+          onToggle={this._selectAll}
+        />
+      </React.Fragment>
     );
   }
 }
+
+function Footer({ buttonTitle, canRunTests, onToggle, onRun }) {
+  const { bottom, left, right } = useSafeArea();
+
+  const paddingVertical = (bottom || 12) + 8;
+
+  return (
+    <View style={[styles.buttonRow, { paddingLeft: left, paddingRight: right }]}>
+      <FooterButton
+        style={{ paddingVertical, alignItems: 'flex-start' }}
+        title={buttonTitle}
+        onPress={onToggle}
+      />
+      <FooterButton
+        style={{ paddingVertical, alignItems: 'flex-end' }}
+        title="Run Tests"
+        disabled={!canRunTests}
+        onPress={onRun}
+      />
+    </View>
+  );
+}
+
+function FooterButton({ title, style, ...props }) {
+  return (
+    <TouchableOpacity
+      style={[styles.footerButton, { opacity: props.disabled ? 0.4 : 1 }, style]}
+      {...props}>
+      <Text style={styles.footerButtonTitle}>{title}</Text>
+    </TouchableOpacity>
+  );
+}
+
+const HORIZONTAL_MARGIN = 24;
 
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
+  footerButtonTitle: {
+    fontSize: 18,
+    color: Colors.tintColor,
+  },
+  footerButton: {
+    flex: 1,
+    justifyContent: 'center',
+    marginHorizontal: HORIZONTAL_MARGIN,
+  },
   listItem: {
-    paddingHorizontal: 10,
-    paddingVertical: 14,
-    borderBottomWidth: 1.0 / PixelRatio.get(),
-    borderBottomColor: '#dddddd',
-    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    paddingVertical: 14,
+    paddingHorizontal: HORIZONTAL_MARGIN,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#dddddd',
   },
   label: {
     color: 'black',
     fontSize: 18,
-    marginLeft: 5,
   },
   buttonRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 12,
-    paddingTop: 12,
-    backgroundColor: '#ECEFF1',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#dddddd',
+    backgroundColor: 'white',
   },
-  buttonContainer: {
-    flex: 1,
-    marginLeft: Platform.OS === 'android' ? 10 : 0,
-    marginRight: Platform.OS === 'android' ? 10 : 0,
+  contentContainerStyle: {
+    paddingBottom: 128,
   },
 });

@@ -1,4 +1,4 @@
-import { CapturedPicture, PictureOptions } from './Camera.types';
+import { CameraCapturedPicture, CameraPictureOptions } from './Camera.types';
 import ExponentCamera from './ExponentCamera.web';
 declare const _default: {
     readonly name: string;
@@ -24,9 +24,11 @@ declare const _default: {
         manual: string;
     };
     readonly VideoQuality: {};
-    takePicture(options: PictureOptions, camera: ExponentCamera): Promise<CapturedPicture>;
+    isAvailableAsync(): Promise<boolean>;
+    takePicture(options: CameraPictureOptions, camera: ExponentCamera): Promise<CameraCapturedPicture>;
     pausePreview(camera: ExponentCamera): Promise<void>;
     resumePreview(camera: ExponentCamera): Promise<any>;
+    getAvailableCameraTypesAsync(): Promise<string[]>;
     getAvailablePictureSizes(ratio: string, camera: ExponentCamera): Promise<string[]>;
 };
 export default _default;

@@ -21,20 +21,25 @@ export default class ExpoComponentsScreen extends React.Component {
       'BarCodeScanner',
       'BlurView',
       'Camera',
+      'DateTimePicker',
       'FacebookAds',
       'GestureHandlerList',
       'GestureHandlerPinch',
       'GestureHandlerSwipeable',
       'Gif',
       'GL',
+      'HTML',
+      'Image',
       'LinearGradient',
       'Lottie',
       'Maps',
+      'MaskedView',
       'ReanimatedImagePreview',
       'ReanimatedProgress',
       'Screens',
       'SharedElement',
       'SVG',
+      'ViewPager',
       'Video',
       'WebView',
     ];
@@ -49,5 +54,5 @@ export default class ExpoComponentsScreen extends React.Component {
         }
         return 0;
       });
-  }
+  };
 }

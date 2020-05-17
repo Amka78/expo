@@ -3,20 +3,13 @@ id: actionsheetios
 title: ActionSheetIOS
 ---
 
-### Methods
-
-- [`showActionSheetWithOptions`](../actionsheetios/#showactionsheetwithoptions)
-- [`showShareActionSheetWithOptions`](../actionsheetios/#showshareactionsheetwithoptions)
-
----
-
 # Reference
 
 ## Methods
 
 ### `showActionSheetWithOptions()`
 
-```javascript
+```js
 
 static showActionSheetWithOptions(options, callback)
 
@@ -36,7 +29,7 @@ The 'callback' function takes one parameter, the zero-based index of the selecte
 
 Minimal example:
 
-```javascript
+```js
 ActionSheetIOS.showActionSheetWithOptions(
   {
     options: ['Cancel', 'Remove'],
@@ -55,7 +48,7 @@ ActionSheetIOS.showActionSheetWithOptions(
 
 ### `showShareActionSheetWithOptions()`
 
-```javascript
+```js
 
 static showShareActionSheetWithOptions(options, failureCallback, successCallback)
 

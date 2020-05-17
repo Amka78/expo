@@ -24,7 +24,7 @@ export default class ExpoApisScreen extends React.Component {
 
   _notificationSubscription?: EventSubscription;
 
-  componentWillMount() {
+  componentDidMount() {
     if (Platform.OS !== 'web') {
       this._notificationSubscription = Notifications.addListener(this._handleNotification);
     }
@@ -102,6 +102,7 @@ export default class ExpoApisScreen extends React.Component {
       'FacebookLogin',
       'FaceDetector',
       'FileSystem',
+      'FirebaseRecaptcha',
       'Font',
       'Geocoding',
       'Google',
@@ -109,6 +110,7 @@ export default class ExpoApisScreen extends React.Component {
       'Haptics',
       'ImagePicker',
       'ImageManipulator',
+      'InAppPurchases',
       'IntentLauncher',
       'KeepAwake',
       'Linking',

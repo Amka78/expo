@@ -27,6 +27,10 @@ export declare type AppleAuthenticationSignInOptions = {
      * avoid replay attacks.
      */
     state?: string;
+    /**
+     * Data that is used to verify the uniqueness of a response and prevent replay attacks.
+     */
+    nonce?: string;
 };
 /**
  * The options you can supply when making a call to `AppleAuthentication.refreshAsync()`. You must
@@ -185,7 +189,11 @@ export declare enum AppleAuthenticationUserDetectionStatus {
  */
 export declare enum AppleAuthenticationButtonType {
     SIGN_IN = 0,
-    CONTINUE = 1
+    CONTINUE = 1,
+    /**
+     * Requires iOS 13.2 or later.
+     */
+    SIGN_UP = 2
 }
 /**
  * Controls the predefined style of the authenticating button.

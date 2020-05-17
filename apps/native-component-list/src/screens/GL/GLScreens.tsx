@@ -3,25 +3,28 @@ import './BeforePIXI';
 import { Asset } from 'expo-asset';
 import { Platform } from '@unimodules/core';
 import * as PIXI from 'pixi.js';
-import { Dimensions } from 'react-native';
+import { Dimensions, PixelRatio } from 'react-native';
+
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass';
 
 import { Renderer, TextureLoader, THREE } from 'expo-three';
 import GLWrap from './GLWrap';
-import GLCameraScreen from './GLCameraScreen';
+import GLMaskScreen from './GLMaskScreen';
 import GLSnapshotsScreen from './GLSnapshotsScreen';
 import GLHeadlessRenderingScreen from './GLHeadlessRenderingScreen';
 import ProcessingWrap from './ProcessingWrap';
+import GLThreeDepthStencilBuffer from './GLThreeDepthStencilBuffer';
 
-// @ts-ignore
-global.THREE = global.THREE || THREE;
-require('three/examples/js/shaders/CopyShader');
-require('three/examples/js/shaders/DigitalGlitch');
-require('three/examples/js/shaders/FilmShader');
-require('three/examples/js/postprocessing/EffectComposer');
-require('three/examples/js/postprocessing/RenderPass');
-require('three/examples/js/postprocessing/ShaderPass');
-require('three/examples/js/postprocessing/GlitchPass');
-require('three/examples/js/postprocessing/FilmPass');
+function optionalRequire(requirer: () => { default: React.ComponentType }) {
+  try {
+    return requirer().default;
+  } catch (e) {
+    return null;
+  }
+}
+const GLCameraScreen = optionalRequire(() => require('./GLCameraScreen'));
 
 interface Screens {
   [key: string]: {
@@ -122,6 +125,10 @@ const GLScreens: Screens = {
     }),
   },
 
+  Mask: {
+    screen: GLMaskScreen,
+  },
+
   Snapshots: {
     screen: GLSnapshotsScreen,
   },
@@ -151,6 +158,12 @@ const GLScreens: Screens = {
       camera.position.z = 3;
 
       return {
+        onLayout({ nativeEvent: { layout } }) {
+          const scale = PixelRatio.get();
+          camera.aspect = layout.width / layout.height;
+          camera.updateProjectionMatrix();
+          renderer.setSize(layout.width * scale, layout.height * scale);
+        },
         onTick() {
           cube.rotation.x += 0.04;
           cube.rotation.y += 0.07;
@@ -161,6 +174,10 @@ const GLScreens: Screens = {
         },
       };
     }),
+  },
+
+  THREEDepthStencilBuffer: {
+    screen: GLThreeDepthStencilBuffer,
   },
 
   THREEGlitchFilm: {
@@ -177,12 +194,10 @@ const GLScreens: Screens = {
       renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
       renderer.setClearColor(0xffffff);
 
-      const composer = new THREE.EffectComposer(renderer);
-      composer.addPass(new THREE.RenderPass(scene, camera));
-      composer.addPass(new THREE.FilmPass(0.8, 0.325, 256, false));
-      const finalPass = new THREE.GlitchPass();
-      finalPass.renderToScreen = true;
-      composer.addPass(finalPass);
+      const composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(scene, camera));
+      const glitchPass = new GlitchPass();
+      composer.addPass(glitchPass);
 
       const geometry = new THREE.BoxGeometry(1, 1, 1);
       const material = new THREE.MeshBasicMaterial({
@@ -208,6 +223,13 @@ const GLScreens: Screens = {
       camera.position.z = 3;
 
       return {
+        onLayout({ nativeEvent: { layout } }) {
+          const scale = PixelRatio.get();
+          camera.aspect = layout.width / layout.height;
+          camera.updateProjectionMatrix();
+          renderer.setSize(layout.width * scale, layout.height * scale);
+          composer.setSize(layout.width, layout.height);
+        },
         onTick() {
           cubes.forEach(({ mesh, angularVelocity }) => {
             mesh.rotation.x += angularVelocity.x;
@@ -246,6 +268,12 @@ const GLScreens: Screens = {
       camera.position.z = 3;
 
       return {
+        onLayout({ nativeEvent: { layout } }) {
+          const scale = PixelRatio.get();
+          camera.aspect = layout.width / layout.height;
+          camera.updateProjectionMatrix();
+          renderer.setSize(layout.width * scale, layout.height * scale);
+        },
         onTick() {
           renderer.render(scene, camera);
           gl.endFrameEXP();
@@ -384,9 +412,11 @@ const GLScreens: Screens = {
     }),
   },
 
-  GLCamera: {
-    screen: GLCameraScreen,
-  },
+  ...(GLCameraScreen && {
+    GLCamera: {
+      screen: GLCameraScreen,
+    },
+  }),
 
   // WebGL 2.0 sample - http://webglsamples.org/WebGL2Samples/#transform_feedback_separated_2
   WebGL2TransformFeedback: {

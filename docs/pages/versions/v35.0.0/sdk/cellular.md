@@ -1,14 +1,21 @@
 ---
 title: Cellular
+sourceCodeUrl: "https://github.com/expo/expo/tree/sdk-35/packages/expo-cellular"
 ---
+
+import TableOfContentSection from '~/components/plugins/TableOfContentSection';
 
 Provides information about the user’s cellular service provider, such as its unique identifier, cellular connection type, and whether it allows VoIP calls on its network.
 
-Note: On the iOS simulator, cellular network information cannot be retrieved. 
+#### Platform Compatibility
+
+| Android Device | Android Emulator | iOS Device | iOS Simulator |  Web  |
+| ------ | ---------- | ------ | ------ | ------ |
+| ✅     |  ✅     | ✅     | ❌     | ✅    |
 
 ## Installation
 
-This API is pre-installed in [managed](../../introduction/managed-vs-bare/#managed-workflow) apps. To use it in a [bare](../../introduction/managed-vs-bare/#bare-workflow) React Native app, follow its [installation instructions](https://github.com/expo/expo/tree/master/packages/expo-cellular).
+For [managed](../../introduction/managed-vs-bare/#managed-workflow) apps, you'll need to run `expo install expo-cellular`. To use it in a [bare](../../introduction/managed-vs-bare/#bare-workflow) React Native app, follow its [installation instructions](https://github.com/expo/expo/tree/master/packages/expo-cellular).
 
 ## API
 
@@ -16,25 +23,13 @@ This API is pre-installed in [managed](../../introduction/managed-vs-bare/#manag
 import * as Cellular from 'expo-cellular';
 ```
 
-### Constants
+<TableOfContentSection title='Constants' contents={['Cellular.allowsVoip', 'Cellular.carrier', 'Cellular.isoCountryCode', 'Cellular.mobileCountryCode', 'Cellular.mobileNetworkCode']} />
 
-- [`Cellular.allowsVoip`](#cellularallowsvoip)
-- [`Cellular.carrier`](#cellularcarrier)
-- [`Cellular.isoCountryCode`](#cellularisocountrycode)
-- [`Cellular.mobileCountryCode`](#cellularmobilecountrycode)
-- [`Cellular.mobileNetworkCode`](#cellularmobilenetworkcode)
+<TableOfContentSection title='Methods' contents={['Cellular.getCellularGenerationAsync()']} />
 
-### Methods
+<TableOfContentSection title='Enum Types' contents={['Cellular.CellularGeneration']} />
 
-- [`Cellular.getCellularGenerationAsync()`](#cellulargetcellulargenerationasync)
-
-### Enum Types
-
-- [`Cellular.CellularGeneration`](#cellularcellulargeneration)
-
-### Errors
-
-- [Error Codes](#error-codes)
+<TableOfContentSection title='Error Codes' contents={[]} />
 
 ## Constants
 
@@ -129,7 +124,7 @@ await Cellular.getCellularGenerationAsync();
 // CellularGeneration.CELLULAR_4G
 ```
 
-## Enums
+## Enum Types
 
 ### `Cellular.CellularGeneration`
 

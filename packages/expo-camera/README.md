@@ -9,7 +9,7 @@ A React component that renders a preview for the device's either front or back c
 
 # Installation in managed Expo projects
 
-For managed [managed](https://docs.expo.io/versions/latest/introduction/managed-vs-bare/) Expo projects, please follow the installation instructions in the [API documentation for the latest stable release](#api-documentation). If you follow the link and there is no documentation available then this library is not yet usable within managed projects &mdash; it is likely to be included in an upcoming Expo SDK release.
+For managed [managed](https://docs.expo.io/versions/latest/introduction/managed-vs-bare/) Expo projects, please follow the installation instructions in the [API documentation for the latest stable release](https://docs.expo.io/versions/latest/sdk/camera/).
 
 # Installation in bare React Native projects
 
@@ -18,22 +18,36 @@ For bare React Native projects, you must ensure that you have [installed and con
 ### Add the package to your npm dependencies
 
 ```
-npm install expo-camera
+expo install expo-camera
 ```
 
 ### Configure for iOS
 
-Run `pod install` in the ios directory after installing the npm package.
+Add `NSCameraUsageDescription` key to your `Info.plist`:
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>Allow $(PRODUCT_NAME) to use the camera</string>
+```
+
+Run `npx pod-install` after installing the npm package.
 
 ### Configure for Android
 
+Add `android.permission.CAMERA` permission to your manifest (`android/app/src/main/AndroidManifest.xml`):
+
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+```
+
 Adjust the `android/build.gradle` to add a new `maven` block after all other repositories as described below:
+
 ```gradle
 allprojects {
     repositories {
-    
+
         // * Your other repositories here *
-        
+
         // * Add a new maven block after other repositories / blocks *
         maven {
             // expo-camera bundles a custom com.google.android:cameraview
@@ -45,4 +59,4 @@ allprojects {
 
 # Contributing
 
-Contributions are very welcome! Please refer to guidelines described in the [contributing guide]( https://github.com/expo/expo#contributing).
+Contributions are very welcome! Please refer to guidelines described in the [contributing guide](https://github.com/expo/expo#contributing).

@@ -8,17 +8,14 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.exifinterface.media.ExifInterface;
-import androidx.core.content.FileProvider;
 import android.util.Base64;
-import android.webkit.MimeTypeMap;
+import android.util.Log;
 
 import com.theartofdev.edmodo.cropper.CropImage;
 
@@ -32,6 +29,7 @@ import org.unimodules.core.interfaces.ExpoMethod;
 import org.unimodules.core.interfaces.services.UIManager;
 import org.unimodules.interfaces.imageloader.ImageLoader;
 import org.unimodules.interfaces.permissions.Permissions;
+import org.unimodules.interfaces.permissions.PermissionsStatus;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -45,13 +43,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.exifinterface.media.ExifInterface;
 
 public class ImagePickerModule extends ExportedModule implements ActivityEventListener {
 
   public static final String TAG = "ExponentImagePicker";
-  public static final String MISSING_ACTIVITY = "MISSING_ACTIVITY";
-  public static final String MISSING_ACTIVITY_MESSAGE = "Activity which was provided during module initialization is no longer available";
+  private static final String ERR_MISSING_ACTIVITY = "ERR_MISSING_ACTIVITY";
+  private static final String MISSING_ACTIVITY_MESSAGE = "Activity which was provided during module initialization is no longer available";
+  private static final String ERR_CAN_NOT_DEDUCE_TYPE = "ERR_CAN_NOT_DEDUCE_TYPE";
+  private static final String CAN_NOT_DEDUCE_TYPE_MESSAGE = "Can not deduce type of the returned file.";
   // We need to explicitly get latitude, longitude, altitude with their specific accessor functions
   // separately so we skip them in this list.
   public static final String[][] exifTags = new String[][]{
@@ -245,6 +248,26 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
     return true;
   }
 
+  @ExpoMethod
+  public void requestCameraRollPermissionsAsync(final Promise promise) {
+    Permissions.askForPermissionsWithPermissionsManager(mModuleRegistry.getModule(Permissions.class), promise, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE);
+  }
+
+  @ExpoMethod
+  public void getCameraRollPermissionsAsync(final Promise promise) {
+    Permissions.getPermissionsWithPermissionsManager(mModuleRegistry.getModule(Permissions.class), promise, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE);
+  }
+
+  @ExpoMethod
+  public void requestCameraPermissionsAsync(final Promise promise) {
+    Permissions.askForPermissionsWithPermissionsManager(mModuleRegistry.getModule(Permissions.class), promise, Manifest.permission.CAMERA);
+  }
+
+  @ExpoMethod
+  public void getCameraPermissionsAsync(final Promise promise) {
+    Permissions.getPermissionsWithPermissionsManager(mModuleRegistry.getModule(Permissions.class), promise, Manifest.permission.CAMERA);
+  }
+
   // NOTE: Currently not reentrant / doesn't support concurrent requests
   @ExpoMethod
   public void launchCameraAsync(final Map<String, Object> options, final Promise promise) {
@@ -253,52 +276,54 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
     }
 
     if (getExperienceActivity() == null) {
-      promise.reject(MISSING_ACTIVITY, MISSING_ACTIVITY_MESSAGE);
+      promise.reject(ERR_MISSING_ACTIVITY, MISSING_ACTIVITY_MESSAGE);
       return;
     }
 
     final Intent cameraIntent = new Intent(mediaTypes.equals("Videos") ?
-                                            MediaStore.ACTION_VIDEO_CAPTURE :
-                                            MediaStore.ACTION_IMAGE_CAPTURE);
-
+        MediaStore.ACTION_VIDEO_CAPTURE :
+        MediaStore.ACTION_IMAGE_CAPTURE);
     if (cameraIntent.resolveActivity(getApplication(null).getPackageManager()) == null) {
       promise.reject(new IllegalStateException("Error resolving activity"));
       return;
     }
 
     Permissions permissionsModule = mModuleRegistry.getModule(Permissions.class);
-
-    String permissionsTable[] = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA};
-
-    permissionsModule.askForPermissions(permissionsTable, new Permissions.PermissionsRequestListener() {
-      @Override
-      public void onPermissionsResult(int[] results) {
-        if (results[0] == PackageManager.PERMISSION_GRANTED && results[1] == PackageManager.PERMISSION_GRANTED) {
-          launchCameraWithPermissionsGranted(promise, cameraIntent);
-        } else {
-          promise.reject(new SecurityException("User rejected permissions"));
-        }
+    if (permissionsModule == null) {
+      promise.reject("E_NO_PERMISSIONS", "Permissions module is null. Are you sure all the installed Expo modules are properly linked?");
+      return;
+    }
+    permissionsModule.askForPermissions(permissionsResponse -> {
+      if (permissionsResponse.get(Manifest.permission.WRITE_EXTERNAL_STORAGE).getStatus() == PermissionsStatus.GRANTED
+          && permissionsResponse.get(Manifest.permission.CAMERA).getStatus() == PermissionsStatus.GRANTED) {
+        launchCameraWithPermissionsGranted(promise, cameraIntent);
+      } else {
+        promise.reject(new SecurityException("User rejected permissions"));
       }
-    });
+    }, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA);
   }
 
   private void launchCameraWithPermissionsGranted(Promise promise, Intent cameraIntent) {
-    File imageFile;
+    File imageFile = null;
     try {
-      imageFile = new File(ExpFileUtils.generateOutputPath(mContext.getCacheDir(),
+      imageFile = new File(ImagePickerFileUtils.generateOutputPath(mContext.getCacheDir(),
           "ImagePicker", mediaTypes.equals("Videos") ? ".mp4" : ".jpg"));
+      boolean fileExists = !imageFile.createNewFile();
+      if (fileExists) {
+        Log.w(getName(), String.format("File %s already exists.", imageFile.getAbsolutePath()));
+      }
     } catch (IOException e) {
       e.printStackTrace();
-      return;
     }
+
     if (imageFile == null) {
       promise.reject(new IOException("Could not create image file."));
       return;
     }
-    mCameraCaptureURI = ExpFileUtils.uriFromFile(imageFile);
+    mCameraCaptureURI = ImagePickerFileUtils.uriFromFile(imageFile);
 
     if (getExperienceActivity() == null) {
-      promise.reject(MISSING_ACTIVITY, MISSING_ACTIVITY_MESSAGE);
+      promise.reject(ERR_MISSING_ACTIVITY, MISSING_ACTIVITY_MESSAGE);
       return;
     }
 
@@ -318,7 +343,7 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
     }
     mPromise = promise;
     // camera intent needs a content URI but we need a file one
-    cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, ExpFileUtils.contentUriFromFile(imageFile, getApplication(null)));
+    cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, ImagePickerFileUtils.contentUriFromFile(imageFile, getApplication(null)));
     startActivityOnResult(cameraIntent, REQUEST_LAUNCH_CAMERA, promise);
   }
 
@@ -340,7 +365,6 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
       String[] mimetypes = {"image/*", "video/*"};
       libraryIntent.putExtra(Intent.EXTRA_MIME_TYPES, mimetypes);
     }
-
 
     mPromise = promise;
 
@@ -399,17 +423,15 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
           final Bundle exifData = exif ? readExif(uri, promise) : null;
 
           if (getExperienceActivity() == null) {
-            promise.reject(MISSING_ACTIVITY, MISSING_ACTIVITY_MESSAGE);
+            promise.reject(ERR_MISSING_ACTIVITY, MISSING_ACTIVITY_MESSAGE);
             return;
           }
-          String type = getExperienceActivity().getApplication().getContentResolver().getType(uri);
 
-          // previous method sometimes returns null
+          String type = ImagePickerFileUtils.getType(getExperienceActivity().getApplication().getContentResolver(), uri);
+
           if (type == null) {
-            String extension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
-            if (extension != null) {
-              type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-            }
+            promise.reject(ERR_CAN_NOT_DEDUCE_TYPE, CAN_NOT_DEDUCE_TYPE_MESSAGE);
+            return;
           }
 
           boolean isImage = type.contains("image");
@@ -447,7 +469,7 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
             // if the image is created by camera intent we don't need a new path - it's been already saved
             final String path = requestCode == REQUEST_LAUNCH_CAMERA ?
                 uri.getPath() :
-                ExpFileUtils.generateOutputPath(mContext.getCacheDir(), "ImagePicker", extension);
+                ImagePickerFileUtils.generateOutputPath(mContext.getCacheDir(), "ImagePicker", extension);
             Uri fileUri = requestCode == REQUEST_LAUNCH_CAMERA ? uri : Uri.fromFile(new File(path));
 
             if (allowsEditing) {
@@ -468,40 +490,50 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
                   .setOutputCompressQuality(quality == null ? DEFAULT_QUALITY : quality)
                   .start(getExperienceActivity());
             } else {
-              final Bitmap.CompressFormat finalCompressFormat = compressFormat;
-              mImageLoader.loadImageForManipulationFromURL(uri.toString(), new ImageLoader.ResultListener() {
-                @Override
-                public void onSuccess(@NonNull Bitmap bitmap) {
-                  int width = bitmap.getWidth();
-                  int height = bitmap.getHeight();
-
-                  ByteArrayOutputStream out = base64 ? new ByteArrayOutputStream() : null;
+              // No modification requested
+              if (quality == null || quality == 100) {
+                try (ByteArrayOutputStream out = base64 ? new ByteArrayOutputStream() : null) {
                   File file = new File(path);
+                  copyImage(uri, file, out);
 
-                  // We have an image and should compress its quality
-                  if (quality != null) {
-                    saveImage(bitmap, finalCompressFormat, file, out);
-                    returnImageResult(exifData, file.toURI().toString(), width, height, out, promise);
-                    return;
-                  }
+                  BitmapFactory.Options options = new BitmapFactory.Options();
+                  options.inJustDecodeBounds = true;
+                  BitmapFactory.decodeFile(file.getAbsolutePath(), options);
 
-                  // No modification requested
-                  try {
-                    copyImage(uri, file, out);
-                    returnImageResult(exifData, file.toURI().toString(), width, height, out, promise);
-                  } catch (IOException e) {
-                    promise.reject("E_COPY_ERR", "Could not copy image from " + uri + ": " + e.getMessage(), e);
-                  }
+                  returnImageResult(exifData, file.toURI().toString(), options.outWidth, options.outHeight, out, promise);
+                } catch (IOException e) {
+                  promise.reject("E_COPY_ERR", "Could not copy image from " + uri + ": " + e.getMessage(), e);
                 }
+              } else {
+                final Bitmap.CompressFormat finalCompressFormat = compressFormat;
+                mImageLoader.loadImageForManipulationFromURL(uri.toString(), new ImageLoader.ResultListener() {
+                  @Override
+                  public void onSuccess(@NonNull Bitmap bitmap) {
+                    int width = bitmap.getWidth();
+                    int height = bitmap.getHeight();
 
-                @Override
-                public void onFailure(@Nullable Throwable cause) {
-                  promise.reject("E_READ_ERR", "Could not open an image from " + uri);
-                  if (requestCode == REQUEST_LAUNCH_CAMERA) {
-                    revokeUriPermissionForCamera();
+                    try (ByteArrayOutputStream out = base64 ? new ByteArrayOutputStream() : null) {
+                      File file = new File(path);
+
+                      // We have an image and should compress its quality
+                      saveImage(bitmap, finalCompressFormat, file, out);
+                      returnImageResult(exifData, file.toURI().toString(), width, height, out, promise);
+                    } catch (IOException e) {
+                      // This exception will come from `ByteArrayOutputStream.close()` method.
+                      // We have already resolve promise.
+                      e.printStackTrace();
+                    }
                   }
-                }
-              });
+
+                  @Override
+                  public void onFailure(@Nullable Throwable cause) {
+                    promise.reject("E_READ_ERR", "Could not open an image from " + uri);
+                    if (requestCode == REQUEST_LAUNCH_CAMERA) {
+                      revokeUriPermissionForCamera();
+                    }
+                  }
+                });
+              }
             }
           } else {
             Bundle response = new Bundle();
@@ -556,19 +588,20 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
    */
   private void copyImage(Uri originalUri, File file, ByteArrayOutputStream out)
       throws IOException {
-    InputStream is = Objects.requireNonNull(
-        mContext.getApplicationContext().getContentResolver().openInputStream(originalUri));
+    try (InputStream is = Objects.requireNonNull(
+        mContext.getApplicationContext().getContentResolver().openInputStream(originalUri))) {
 
-    if (out != null) {
-      IOUtils.copy(is, out);
-    }
+      if (out != null) {
+        IOUtils.copy(is, out);
+      }
 
-    if (originalUri.compareTo(Uri.fromFile(file)) != 0) { // do not copy file over the same file
-      try (FileOutputStream fos = new FileOutputStream(file)) {
-        if (out != null) {
-          fos.write(out.toByteArray());
-        } else {
-          IOUtils.copy(is, fos);
+      if (originalUri.compareTo(Uri.fromFile(file)) != 0) { // do not copy file over the same file
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+          if (out != null) {
+            fos.write(out.toByteArray());
+          } else {
+            IOUtils.copy(is, fos);
+          }
         }
       }
     }
@@ -588,20 +621,21 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
       width = result.getCropRect().height();
       height = result.getCropRect().width();
     }
-    ByteArrayOutputStream out = null;
-    if (base64) {
-      out = new ByteArrayOutputStream();
-      try {
-        // `CropImage` nullifies the `result.getBitmap()` after it writes out to a file, so
-        // we have to read back...
-        InputStream in = new FileInputStream(result.getUri().getPath());
-        IOUtils.copy(in, out);
-      } catch (IOException e) {
-        promise.reject(e);
-        return;
+
+    try (InputStream in = new FileInputStream(result.getUri().getPath())) {
+      if (base64) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+          // `CropImage` nullifies the `result.getBitmap()` after it writes out to a file, so
+          // we have to read back..
+          IOUtils.copy(in, out);
+          returnImageResult(exifData, result.getUri().toString(), width, height, out, promise);
+        }
+      } else {
+        returnImageResult(exifData, result.getUri().toString(), width, height, null, promise);
       }
+    } catch (IOException e) {
+      promise.reject(e);
     }
-    returnImageResult(exifData, result.getUri().toString(), width, height, out, promise);
   }
 
   private void returnImageResult(Bundle exifData, String uri, int width, int height,
@@ -609,7 +643,7 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
     Bundle response = new Bundle();
     response.putString("uri", uri);
     if (base64) {
-      response.putString("base64", Base64.encodeToString(base64OutputStream.toByteArray(), Base64.DEFAULT));
+      response.putString("base64", Base64.encodeToString(base64OutputStream.toByteArray(), Base64.NO_WRAP));
     }
     response.putInt("width", width);
     response.putInt("height", height);
@@ -618,36 +652,24 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
     }
     response.putBoolean("cancelled", false);
     response.putString("type", "image");
+
     promise.resolve(response);
   }
 
   private void writeImage(Bitmap image, String path, Bitmap.CompressFormat compressFormat) {
-    FileOutputStream out = null;
-    try {
-      out = new FileOutputStream(path);
+    try (FileOutputStream out = new FileOutputStream(path)) {
       image.compress(compressFormat, quality, out);
     } catch (Exception e) {
       e.printStackTrace();
-    } finally {
-      try {
-        if (out != null) {
-          out.close();
-        }
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
     }
   }
 
   private String writeVideo(Uri uri) {
-    InputStream in;
-    OutputStream out = null;
     String path = null;
-    try {
-      in = getApplication(mPromise).getContentResolver().openInputStream(uri);
-      if (in != null) {
-        path = ExpFileUtils.generateOutputPath(mContext.getCacheDir(), "ImagePicker", ".mp4");
-        out = new FileOutputStream(path);
+    try (InputStream in = Objects.requireNonNull(getApplication(mPromise).getContentResolver().openInputStream(uri))) {
+      path = ImagePickerFileUtils.generateOutputPath(mContext.getCacheDir(), "ImagePicker", ".mp4");
+
+      try (OutputStream out = new FileOutputStream(path)) {
         byte[] buffer = new byte[4096];
         int bytesRead;
         while ((bytesRead = in.read(buffer)) > 0) {
@@ -656,15 +678,8 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
       }
     } catch (IOException e) {
       e.printStackTrace();
-    } finally {
-      try {
-        if (out != null) {
-          out.close();
-        }
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
     }
+
     return path;
   }
 
@@ -674,36 +689,36 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
       return null;
     }
 
-    InputStream in = application.getContentResolver().openInputStream(uri);
-
-    ExifInterface exifInterface = new ExifInterface(in);
     Bundle exifMap = new Bundle();
-    for (String[] tagInfo : exifTags) {
-      String name = tagInfo[1];
-      if (exifInterface.getAttribute(name) != null) {
-        String type = tagInfo[0];
-        switch (type) {
-          case "string":
-            exifMap.putString(name, exifInterface.getAttribute(name));
-            break;
-          case "int":
-            exifMap.putInt(name, exifInterface.getAttributeInt(name, 0));
-            break;
-          case "double":
-            exifMap.putDouble(name, exifInterface.getAttributeDouble(name, 0));
-            break;
+    try (InputStream in = Objects.requireNonNull(application.getContentResolver().openInputStream(uri))) {
+      ExifInterface exifInterface = new ExifInterface(in);
+
+      for (String[] tagInfo : exifTags) {
+        String name = tagInfo[1];
+        if (exifInterface.getAttribute(name) != null) {
+          String type = tagInfo[0];
+          switch (type) {
+            case "string":
+              exifMap.putString(name, exifInterface.getAttribute(name));
+              break;
+            case "int":
+              exifMap.putInt(name, exifInterface.getAttributeInt(name, 0));
+              break;
+            case "double":
+              exifMap.putDouble(name, exifInterface.getAttributeDouble(name, 0));
+              break;
+          }
         }
       }
-    }
 
-    // Explicitly get latitude, longitude, altitude with their specific accessor functions.
-    double[] latLong = exifInterface.getLatLong();
-    if (latLong != null) {
-      exifMap.putDouble(ExifInterface.TAG_GPS_LATITUDE, latLong[0]);
-      exifMap.putDouble(ExifInterface.TAG_GPS_LONGITUDE, latLong[1]);
-      exifMap.putDouble(ExifInterface.TAG_GPS_ALTITUDE, exifInterface.getAltitude(0));
+      // Explicitly get latitude, longitude, altitude with their specific accessor functions.
+      double[] latLong = exifInterface.getLatLong();
+      if (latLong != null) {
+        exifMap.putDouble(ExifInterface.TAG_GPS_LATITUDE, latLong[0]);
+        exifMap.putDouble(ExifInterface.TAG_GPS_LONGITUDE, latLong[1]);
+        exifMap.putDouble(ExifInterface.TAG_GPS_ALTITUDE, exifInterface.getAltitude(0));
+      }
     }
-
     return exifMap;
   }
 
@@ -753,7 +768,7 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
     if (getExperienceActivity() != null) {
       getExperienceActivity().startActivityForResult(intent, requestCode);
     } else {
-      promise.reject(MISSING_ACTIVITY,
+      promise.reject(ERR_MISSING_ACTIVITY,
           MISSING_ACTIVITY_MESSAGE);
     }
   }
@@ -761,42 +776,11 @@ public class ImagePickerModule extends ExportedModule implements ActivityEventLi
   private Application getApplication(Promise promise) {
     if (getExperienceActivity() == null) {
       if (promise != null) {
-        promise.reject(MISSING_ACTIVITY, MISSING_ACTIVITY_MESSAGE);
+        promise.reject(ERR_MISSING_ACTIVITY, MISSING_ACTIVITY_MESSAGE);
       }
       return null;
     } else {
       return getExperienceActivity().getApplication();
     }
   }
-
-  public static class ExpFileUtils {
-
-    // http://stackoverflow.com/a/38858040/1771921
-    public static Uri uriFromFile(File file) {
-      return Uri.fromFile(file);
-    }
-
-    public static Uri contentUriFromFile(File file, Application application) {
-      try {
-        return FileProvider.getUriForFile(application, application.getPackageName() + ".ImagePickerFileProvider", file);
-      } catch (Exception e) {
-        return Uri.fromFile(file);
-      }
-    }
-
-    public static File ensureDirExists(File dir) throws IOException {
-      if (!(dir.isDirectory() || dir.mkdirs())) {
-        throw new IOException("Couldn't create directory '" + dir + "'");
-      }
-      return dir;
-    }
-
-    public static String generateOutputPath(File internalDirectory, String dirName, String extension) throws IOException {
-      File directory = new File(internalDirectory + File.separator + dirName);
-      ExpFileUtils.ensureDirExists(directory);
-      String filename = UUID.randomUUID().toString();
-      return directory + File.separator + filename + extension;
-    }
-  }
-
 }

@@ -1,19 +1,31 @@
+import { deprecate } from '@unimodules/core';
 import Constants from 'expo-constants';
 import { Linking, Platform } from 'react-native';
 
 import StoreReview from './ExpoStoreReview';
 
 /*
- * Platform must be iOS
- * iOS 10.3 or greater
- * `SKStoreReviewController` class is available
+ * Determine if the platform has the capabilities to use `requestedReview`
+ * iOS: `true` if iOS 10.3 or greater and the StoreKit framework is linked
+ * Android: Always `true` (open URL to app store)
+ * Web: Always `false`
  */
-export function isSupported(): boolean {
-  return StoreReview && StoreReview.isSupported;
+export async function isAvailableAsync(): Promise<boolean> {
+  return StoreReview.isAvailableAsync();
 }
 
 /*
- * Use the iOS `SKStoreReviewController` API to prompt a user rating without leaving the app.
+ * Deprecated
+ */
+export function isSupported(): void {
+  deprecate('expo-store-review', 'StoreReview.isSupported', {
+    replacement: 'StoreReview.isAvailableAsync',
+  });
+}
+
+/*
+ * Use the iOS `SKStoreReviewController` API to prompt a user rating without leaving the app,
+ * or open a web browser to the play store on Android
  */
 export async function requestReview(): Promise<void> {
   if (StoreReview && StoreReview.requestReview) {
@@ -44,9 +56,11 @@ export async function requestReview(): Promise<void> {
  */
 export function storeUrl(): string | null {
   const { manifest } = Constants;
-  if (Platform.OS === 'ios' && manifest.ios) {
+  // eslint-disable-next-line no-undef
+  if (Platform.OS === 'ios' && manifest?.ios) {
     return manifest.ios.appStoreUrl;
-  } else if (Platform.OS === 'android' && manifest.android) {
+    // eslint-disable-next-line no-undef
+  } else if (Platform.OS === 'android' && manifest?.android) {
     return manifest.android.playStoreUrl;
   } else {
     return null;
@@ -56,6 +70,6 @@ export function storeUrl(): string | null {
 /*
  * A flag to detect if this module can do anything
  */
-export function hasAction(): boolean {
-  return !!storeUrl() || isSupported();
+export async function hasAction(): Promise<boolean> {
+  return !!storeUrl() || (await isAvailableAsync());
 }

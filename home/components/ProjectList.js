@@ -3,14 +3,14 @@
 import React from 'react';
 import { ActivityIndicator, FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import InfiniteScrollView from 'react-native-infinite-scroll-view';
-import { withNavigation } from 'react-navigation';
+import { useTheme, withNavigation } from 'react-navigation';
 
 import Colors from '../constants/Colors';
 import ProjectCard from './ProjectCard';
-import SmallProjectCard from './SmallProjectCard';
+import ProjectListItem from './ProjectListItem';
 
 @withNavigation
-export default class ProjectList extends React.PureComponent {
+class ProjectList extends React.PureComponent {
   state = {
     isReady: false,
     isRefetching: false,
@@ -53,12 +53,18 @@ export default class ProjectList extends React.PureComponent {
   };
 
   _renderContent = () => {
+    let { theme } = this.props;
+
     return (
       <FlatList
         data={this.props.data.apps}
         keyExtractor={this._extractKey}
         renderItem={this._renderItem}
-        style={[{ flex: 1 }, !this.props.belongsToCurrentUser && styles.largeProjectCardList]}
+        style={[
+          { flex: 1 },
+          !this.props.belongsToCurrentUser && styles.largeProjectCardList,
+          { backgroundColor: theme === 'dark' ? '#000' : Colors.light.greyBackground },
+        ]}
         renderScrollComponent={props => {
           // note(brent): renderScrollComponent is passed on to
           // InfiniteScrollView so it renders itself again and the result is two
@@ -106,14 +112,13 @@ export default class ProjectList extends React.PureComponent {
   _renderItem = ({ item: app, index }) => {
     if (this.props.belongsToCurrentUser) {
       return (
-        <SmallProjectCard
+        <ProjectListItem
           key={index.toString()}
-          hideUsername
-          iconUrl={app.iconUrl}
-          projectName={app.name}
-          slug={app.packageName}
-          projectUrl={app.fullName}
-          fullWidthBorder
+          url={app.fullName}
+          image={app.iconUrl}
+          title={app.name}
+          subtitle={app.packageName || app.fullName}
+          last={index === this.props.data.apps.length - 1}
         />
       );
     } else {
@@ -137,6 +142,12 @@ export default class ProjectList extends React.PureComponent {
     this.props.navigation.navigate('Profile', { username });
   };
 }
+
+export default props => {
+  let theme = useTheme();
+
+  return <ProjectList {...props} theme={theme} />;
+};
 
 const styles = StyleSheet.create({
   largeProjectCardList: {

@@ -1,14 +1,24 @@
 ---
 title: Notifications
+sourceCodeUrl: 'https://github.com/expo/expo/tree/sdk-36/packages/expo/src/Notifications'
 ---
 
-Provides access to remote notifications (also known as push notifications) and local notifications (scheduling and immediate) related functions.
+import SnackInline from '~/components/plugins/SnackInline';
+import PlatformsSection from '~/components/plugins/PlatformsSection';
 
-Want to see it in action? Check out [this Snack](https://snack.expo.io/@documentation/pushnotifications)!
+The `Notifications` API from **`expo`** provides access to remote notifications (also known as push notifications) and local notifications (scheduling and immediate) related functions.
+
+<PlatformsSection title="Push notifications Platform Compatibility" android ios web={{ pending: 'https://github.com/expo/expo/issues/6895' }} />
+
+<PlatformsSection title="Local notifications Platform Compatibility" android emulator ios simulator web={{ pending: 'https://github.com/expo/expo/issues/6895' }} />
+
+> ⚠️ **Important Android limitation:** Local notifications are cleared when an Android device is restarted. ([See the feature request](https://expo.canny.io/feature-requests/p/keep-scheduled-notifications-after-reboot)).
 
 ## Installation
 
-This API is pre-installed in [managed](../../introduction/managed-vs-bare/#managed-workflow) apps. It is not available for [bare](../../introduction/managed-vs-bare/#bare-workflow) React Native apps, although there are some comparable libraries that you may use instead.
+This API is pre-installed in [managed](../../introduction/managed-vs-bare/#managed-workflow) apps. See the [expo-notifications README](https://github.com/expo/expo/tree/master/packages/expo-notifications) for information on how to integrate notifications into bare React Native apps.
+
+> 💡 Please note that the [expo-notifications library for bare workflow](https://github.com/expo/expo/tree/master/packages/expo-notifications) has a different API from the Notifications API explained on this page, which is for the managed workflow. These APIs will be unified in an upcoming SDK release.
 
 ## API
 
@@ -16,7 +26,83 @@ This API is pre-installed in [managed](../../introduction/managed-vs-bare/#manag
 import { Notifications } from 'expo';
 ```
 
-Checkout [this Snack](https://snack.expo.io/@documentation/pushnotifications) to see Notifications in action- but be sure to use a device! Push notifications don't work on simulators/emulators. For Expo for Web, unless you're using localhost, your web page has to support HTTPS in order for notifications to work.
+Check out the Snack below to see Notifications in action, but be sure to use a physical device! Push notifications don't work on simulators/emulators.
+
+<SnackInline label='Push Notifications' templateId='pushnotifications' dependencies={['expo-constants', 'expo-permissions']}>
+
+```js
+import React from 'react';
+import { Text, View, Button, Vibration, Platform } from 'react-native';
+import { Notifications } from 'expo';
+import * as Permissions from 'expo-permissions';
+import Constants from 'expo-constants';
+
+export default class AppContainer extends React.Component {
+  state = {
+    expoPushToken: '',
+    notification: {},
+  };
+
+  registerForPushNotificationsAsync = async () => {
+    if (Constants.isDevice) {
+      const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        alert('Failed to get push token for push notification!');
+        return;
+      }
+      token = await Notifications.getExpoPushTokenAsync();
+      console.log(token);
+      this.setState({ expoPushToken: token });
+    } else {
+      alert('Must use physical device for Push Notifications');
+    }
+
+    if (Platform.OS === 'android') {
+      Notifications.createChannelAndroidAsync('default', {
+        name: 'default',
+        sound: true,
+        priority: 'max',
+        vibrate: [0, 250, 250, 250],
+      });
+    }
+  };
+
+  componentDidMount() {
+    this.registerForPushNotificationsAsync();
+    this._notificationSubscription = Notifications.addListener(this._handleNotification);
+  }
+
+  _handleNotification = notification => {
+    Vibration.vibrate();
+    console.log(notification);
+    this.setState({ notification: notification });
+  };
+
+  render() {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'space-around',
+        }}>
+        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+          <Text>Origin: {this.state.notification.origin}</Text>
+          <Text>Data: {JSON.stringify(this.state.notification.data)}</Text>
+        </View>
+        <Button title={'Press to Send Notification'} onPress={() => this.sendPushNotification()} />
+      </View>
+    );
+  }
+}
+```
+
+</SnackInline>
 
 ## Subscribing to Notifications
 
@@ -46,6 +132,16 @@ An object that is passed into each event listener when a notification is receive
 - **data (_object_)** -- Any data that has been attached with the notification.
 - **remote (_boolean_)** -- `true` if the notification is a push notification, `false` if it is a local notification.
 
+The `origin` will vary based on the app's state at the time the notification was received and the user's subsequent action. The table below summarizes the different possibilities and what the `origin` will be in each case.
+
+| Push was received when...                                            |          `origin` will be...          |
+| -------------------------------------------------------------------- | :-----------------------------------: |
+| App is open and foregrounded                                         |             `'received'`              |
+| App is open and backgrounded, then notification is not selected      | no notification is passed to listener |
+| App is open and backgrounded, then notification is selected          |             `'selected'`              |
+| App was not open, and then opened by selecting the push notification |             `'selected'`              |
+| App was not open, and then opened by tapping the home screen icon    | no notification is passed to listener |
+
 ## Notifications
 
 ### `Notifications.getExpoPushTokenAsync()`
@@ -59,8 +155,6 @@ The Promise will be rejected if the app does not have permission to send notific
 #### Error Codes
 
 - `E_NOTIFICATIONS_TOKEN_REGISTRATION_FAILED` - the device was unable to register for remote notifications with Expo.
-- `E_NOTIFICATIONS_PUSH_WEB_MISSING_CONFIG` - (web only) you did not provide `owner`, `slug`, and `notification.vapidPublicKey` in `app.json` to use push notifications in Expo for Web. ([Learn more here](../../guides/using-vapid/))
-- `E_NOTIFICATIONS_PUSH_WEB_TOKEN_REGISTRATION_FAILED` - (web only) the device was unable to register for remote notifications with the browser endpoint.
 
 ### `Notifications.presentLocalNotificationAsync(localNotification)`
 
@@ -124,9 +218,39 @@ Cancel all scheduled notifications.
 
 A notification category defines a set of actions with which a user may interact with and respond to the incoming notification. You can read more about categories [here (for iOS)](https://developer.apple.com/documentation/usernotifications/unnotificationcategory) and [here (for Android)](https://developer.android.com/guide/topics/ui/notifiers/notifications#Actions).
 
-Check out how to implement interactive Notifications in your app by taking a look at the code behind [this Snack](https://snack.expo.io/@documentation/interactivenotificationexample)
+Here's an example of creating a category with different types of interactions:
 
-### `Notifications.createCategoryAsync(name: string, actions: ActionType[])`
+```jsx
+Notifications.createCategoryAsync('myCategoryName', [
+  {
+    actionId: 'vanillaButton',
+    buttonTitle: 'Plain Option',
+    isDestructive: false,
+    isAuthenticationRequired: false,
+  },
+  {
+    actionId: 'highlightedButton',
+    buttonTitle: 'Destructive!!!',
+    isDestructive: true,
+    isAuthenticationRequired: false,
+  },
+  {
+    actionId: 'requiredAuthenticationButton',
+    buttonTitle: 'Click to Authenticate',
+    isDestructive: false,
+    isAuthenticationRequired: true,
+  },
+  {
+    actionId: 'textResponseButton',
+    buttonTitle: 'Click to Respond with Text',
+    textInput: { submitButtonTitle: 'Send', placeholder: 'Type Something' },
+    isDestructive: false,
+    isAuthenticationRequired: false,
+  },
+]);
+```
+
+### `Notifications.createCategoryAsync(name: string, actions: ActionType[], previewPlaceholder: string)`
 
 Registers a new set of actions under given `name`.
 
@@ -140,6 +264,7 @@ Registers a new set of actions under given `name`.
   - **isDestructive (_boolean_)** -- (iOS only) If this property is truthy, on iOS the button title will be highlighted (as if [this native option](https://developer.apple.com/documentation/usernotifications/unnotificationactionoptions/1648199-destructive) was set)
   - **isAuthenticationRequired (_boolean_)** -- (iOS only) If this property is truthy, triggering the action will require authentication from the user (as if [this native option](https://developer.apple.com/documentation/usernotifications/unnotificationactionoptions/1648196-authenticationrequired) was set)
   - **doNotOpenInForeground (_boolean_)** -- (iOS only) If this property is truthy, triggering the action will not open the app in foreground (as if [this native option](https://developer.apple.com/documentation/usernotifications/unnotificationactionoptions/unnotificationactionoptionforeground) was **NOT** set)
+- **previewPlaceholder (_string_)** -- (iOS only) Customizable placeholder for the notification preview text. This is shown if the user has disabled notification previews for the app. Defaults to the localized iOS system default placeholder (`Notification`).
 
 ### `Notifications.deleteCategoryAsync(name: string)`
 
@@ -170,37 +295,6 @@ _Android only_. On Android 8.0+, deletes the notification channel with the given
 
 - **id (_string_)** -- ID string of the channel to delete.
 
-### Related types
-
-#### LocalNotification
-
-An object used to describe the local notification that you would like to present or schedule.
-
-- **title (_string_)** -- title text of the notification
-- **body (_string_)** -- body text of the notification.
-- **data (_optional_) (_object_)** -- any data that has been attached with the notification.
-- **categoryId (_optional_) (_string_)** -- ID of the category (first created with `Notifications.createCategoryAsync`) associated to the notification.
-- **ios (_optional_) (_object_)** -- notification configuration specific to iOS.
-  - **sound** (_optional_) (_boolean_) -- if `true`, play a sound. Default: `false`.
-  - **_displayInForeground** (_optional_) (_boolean_) -- if `true`, display the notification when the app is foreground. Default: `false`.
-- **android (_optional_) (_object_)** -- notification configuration specific to Android.
-  - **channelId** (_optional, but recommended_) (_string_) -- ID of the channel to post this notification to in Android 8.0+. If null, defaults to the "Default" channel which Expo will automatically create for you. If you don't want Expo to create a default channel, make sure to always specify this field for all notifications.
-  - **icon** (_optional_) (_string_) -- URL of icon to display in notification drawer.
-  - **color** (_optional_) (_string_) -- color of the notification icon in notification drawer.
-  - **sticky** (_optional_) (_boolean_) -- if `true`, the notification will be sticky and not dismissable by user. The notification must be programmatically dismissed. Default: `false`.
-  - **link** (_optional_) (_string_) -- external link to open when notification is selected.
-
-#### ChannelAndroid
-
-An object used to describe an Android notification channel that you would like to create.
-
-- **name (_string_)** -- user-facing name of the channel (or "category" in the Settings UI). Required.
-- **description (_optional_) (_string_)** -- user-facing description of the channel, which will be displayed in the Settings UI.
-- **sound (_optional_) (_boolean_)** -- if `true`, notifications posted to this channel will play a sound. Default: `false`.
-- **priority (_optional_) (_min | low | default | high | max_)** -- Android may present notifications in this channel differently according to the priority. For example, a `high` priority notification will likely to be shown as a heads-up notification. Note that the Android OS gives no guarantees about the user-facing behavior these abstractions produce -- for example, on many devices, there is no noticeable difference between `high` and `max`.
-- **vibrate (_optional_) (_boolean_ or _array_)** -- if `true`, vibrate the device whenever a notification is posted to this channel. An array can be supplied instead to customize the vibration pattern, e.g. - `[ 0, 500 ]` or `[ 0, 250, 250, 250 ]`. Default: `false`.
-- **badge (_optional_) (_boolean_)** -- if `true`, unread notifications posted to this channel will cause the app launcher icon to be displayed with a badge on Android 8.0+. If `false`, notifications in this channel will never cause a badge. Default: `true`.
-
 ## App Icon Badge Number (iOS)
 
 ### `Notifications.getBadgeNumberAsync()`
@@ -211,7 +305,7 @@ Returns a promise that resolves to the number that is displayed in a badge on th
 
 ### `Notifications.setBadgeNumberAsync(number)`
 
-Sets the number displayed in the app icon's badge to the given number. Setting the number to zero will both clear the badge and the list of notifications in the device's notification center on iOS. On Android this method does nothing.
+Sets the number displayed in the app icon's badge to the given number. Setting the number to zero will both clear the badge and the list of notifications in the device's notification center on iOS. This method will reject on Android.
 
 ## Standalone App Only
 
@@ -233,15 +327,39 @@ A Promise that resolves to an object with the following fields:
 - **type (_string_)** -- Either "apns", "fcm", or "gcm".
 - **data (_string_)** -- The push token as a string.
 
-#### Error Codes
+## Related types
 
-- `E_NOTIFICATIONS_PUSH_WEB_MISSING_CONFIG` - (web only) you did not provide `owner`, `slug`, and `notification.vapidPublicKey` in `app.json` to use push notifications in Expo for Web. ([Learn more here](../../guides/using-vapid/))
-- `E_NOTIFICATIONS_PUSH_WEB_TOKEN_REGISTRATION_FAILED` - (web only) the device was unable to register for remote notifications with the browser endpoint.
+### LocalNotification
+
+An object used to describe the local notification that you would like to present or schedule.
+
+- **title (_string_)** -- title text of the notification
+- **body (_string_)** -- body text of the notification.
+- **data (_optional_) (_object_)** -- any data that has been attached with the notification.
+- **categoryId (_optional_) (_string_)** -- ID of the category (first created with `Notifications.createCategoryAsync`) associated to the notification.
+- **ios (_optional_) (_object_)** -- notification configuration specific to iOS.
+  - **sound** (_optional_) (_boolean_) -- if `true`, play a sound. Default: `false`.
+  - **\_displayInForeground** (_optional_) (_boolean_) -- if `true`, display the notification when the app is foreground. Default: `false`.
+- **android (_optional_) (_object_)** -- notification configuration specific to Android.
+  - **channelId** (_optional, but recommended_) (_string_) -- ID of the channel to post this notification to in Android 8.0+. If null, defaults to the "Default" channel which Expo will automatically create for you. If you don't want Expo to create a default channel, make sure to always specify this field for all notifications.
+  - **icon** (_optional_) (_string_) -- URL of icon to display in notification drawer.
+  - **color** (_optional_) (_string_) -- color of the notification icon in notification drawer.
+  - **sticky** (_optional_) (_boolean_) -- if `true`, the notification will be sticky and not dismissable by user. The notification must be programmatically dismissed. Default: `false`.
+  - **link** (_optional_) (_string_) -- external link to open when notification is selected.
+
+### ChannelAndroid
+
+An object used to describe an Android notification channel that you would like to create.
+
+- **name (_string_)** -- user-facing name of the channel (or "category" in the Settings UI). Required.
+- **description (_optional_) (_string_)** -- user-facing description of the channel, which will be displayed in the Settings UI.
+- **sound (_optional_) (_boolean_)** -- if `true`, notifications posted to this channel will play a sound. Default: `false`.
+- **priority (_optional_) (_min | low | default | high | max_)** -- Android may present notifications in this channel differently according to the priority. For example, a `high` priority notification will likely to be shown as a heads-up notification. Note that the Android OS gives no guarantees about the user-facing behavior these abstractions produce -- for example, on many devices, there is no noticeable difference between `high` and `max`.
+- **vibrate (_optional_) (_boolean_ or _array_)** -- if `true`, vibrate the device whenever a notification is posted to this channel. An array can be supplied instead to customize the vibration pattern, e.g. - `[ 0, 500 ]` or `[ 0, 250, 250, 250 ]`. Default: `false`.
+- **badge (_optional_) (_boolean_)** -- if `true`, unread notifications posted to this channel will cause the app launcher icon to be displayed with a badge on Android 8.0+. If `false`, notifications in this channel will never cause a badge. Default: `true`.
 
 ## Error Codes
 
-| Code                                               | Description                                                                                      |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| E_NOTIFICATIONS_TOKEN_REGISTRATION_FAILED          | The device was unable to register for remote notifications with Expo.                            |
-| E_NOTIFICATIONS_PUSH_WEB_MISSING_CONFIG            | (Web only) You did not provide `owner`, `slug`, and `notification.vapidPublicKey` in `app.json` to use push notifications in Expo for Web. ([Learn more here](../../guides/using-vapid/)) |
-| E_NOTIFICATIONS_PUSH_WEB_TOKEN_REGISTRATION_FAILED | (Web only) The device was unable to register for remote notifications with the browser endpoint. |
+| Code                                      | Description                                                           |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| E_NOTIFICATIONS_TOKEN_REGISTRATION_FAILED | The device was unable to register for remote notifications with Expo. |  |

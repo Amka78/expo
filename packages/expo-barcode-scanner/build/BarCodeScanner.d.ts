@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { ViewProps } from 'react-native';
-declare type BarCodeEvent = {
+import { PermissionResponse, PermissionStatus } from 'unimodules-permissions-interface';
+export declare type BarCodeEvent = {
     type: string;
     data: string;
     [key: string]: any;
@@ -10,6 +11,7 @@ export declare type BarCodeEventCallbackArguments = {
     nativeEvent: BarCodeEvent;
 };
 export declare type BarCodeScannedCallback = (params: BarCodeEvent) => void;
+export { PermissionResponse, PermissionStatus };
 export interface BarCodeScannerProps extends ViewProps {
     type?: 'front' | 'back' | number;
     barCodeTypes?: string[];
@@ -43,9 +45,6 @@ export declare class BarCodeScanner extends React.Component<BarCodeScannerProps>
         collapsable?: PropTypes.Validator<boolean | undefined> | undefined;
         needsOffscreenAlphaCompositing?: PropTypes.Validator<boolean | undefined> | undefined;
         renderToHardwareTextureAndroid?: PropTypes.Validator<boolean | undefined> | undefined;
-        accessibilityViewIsModal?: PropTypes.Validator<boolean | undefined> | undefined;
-        accessibilityActions?: PropTypes.Validator<string[] | undefined> | undefined;
-        onAccessibilityAction?: PropTypes.Validator<(() => void) | undefined> | undefined;
         shouldRasterizeIOS?: PropTypes.Validator<boolean | undefined> | undefined;
         isTVSelectable?: PropTypes.Validator<boolean | undefined> | undefined;
         hasTVPreferredFocus?: PropTypes.Validator<boolean | undefined> | undefined;
@@ -72,16 +71,23 @@ export declare class BarCodeScanner extends React.Component<BarCodeScannerProps>
         onTouchCancel?: PropTypes.Validator<((event: import("react-native").GestureResponderEvent) => void) | undefined> | undefined;
         onTouchEndCapture?: PropTypes.Validator<((event: import("react-native").GestureResponderEvent) => void) | undefined> | undefined;
         accessible?: PropTypes.Validator<boolean | undefined> | undefined;
+        accessibilityActions?: PropTypes.Validator<readonly Readonly<{
+            name: import("react-native").AccessibilityActionName;
+            label?: string | undefined;
+        }>[] | undefined> | undefined;
         accessibilityLabel?: PropTypes.Validator<string | undefined> | undefined;
         accessibilityRole?: PropTypes.Validator<"none" | "button" | "link" | "search" | "image" | "keyboardkey" | "text" | "adjustable" | "imagebutton" | "header" | "summary" | "alert" | "checkbox" | "combobox" | "menu" | "menubar" | "menuitem" | "progressbar" | "radio" | "radiogroup" | "scrollbar" | "spinbutton" | "switch" | "tab" | "tablist" | "timer" | "toolbar" | undefined> | undefined;
-        accessibilityStates?: PropTypes.Validator<import("react-native").AccessibilityStates[] | undefined> | undefined;
         accessibilityState?: PropTypes.Validator<import("react-native").AccessibilityState | undefined> | undefined;
         accessibilityHint?: PropTypes.Validator<string | undefined> | undefined;
+        accessibilityValue?: PropTypes.Validator<import("react-native").AccessibilityValue | undefined> | undefined;
+        onAccessibilityAction?: PropTypes.Validator<((event: import("react-native").AccessibilityActionEvent) => void) | undefined> | undefined;
         accessibilityComponentType?: PropTypes.Validator<"none" | "button" | "radiobutton_checked" | "radiobutton_unchecked" | undefined> | undefined;
         accessibilityLiveRegion?: PropTypes.Validator<"none" | "polite" | "assertive" | undefined> | undefined;
         importantForAccessibility?: PropTypes.Validator<"auto" | "yes" | "no" | "no-hide-descendants" | undefined> | undefined;
         accessibilityElementsHidden?: PropTypes.Validator<boolean | undefined> | undefined;
-        accessibilityTraits?: PropTypes.Validator<"none" | "button" | "link" | "search" | "image" | "text" | "adjustable" | "header" | "summary" | "disabled" | "selected" | "plays" | "key" | "frequentUpdates" | "startsMedia" | "allowsDirectInteraction" | "pageTurn" | import("react-native").AccessibilityTrait[] | undefined> | undefined;
+        accessibilityTraits?: PropTypes.Validator<"none" | "button" | "link" | "search" | "image" | "text" | "adjustable" | "header" | "summary" | "selected" | "plays" | "key" | "disabled" | "frequentUpdates" | "startsMedia" | "allowsDirectInteraction" | "pageTurn" | import("react-native").AccessibilityTrait[] | undefined> | undefined;
+        accessibilityViewIsModal?: PropTypes.Validator<boolean | undefined> | undefined;
+        onAccessibilityEscape?: PropTypes.Validator<(() => void) | undefined> | undefined;
         onAccessibilityTap?: PropTypes.Validator<(() => void) | undefined> | undefined;
         onMagicTap?: PropTypes.Validator<(() => void) | undefined> | undefined;
         accessibilityIgnoresInvertColors?: PropTypes.Validator<boolean | undefined> | undefined;
@@ -90,6 +96,8 @@ export declare class BarCodeScanner extends React.Component<BarCodeScannerProps>
         type: any;
         barCodeTypes: unknown[];
     };
+    static getPermissionsAsync(): Promise<PermissionResponse>;
+    static requestPermissionsAsync(): Promise<PermissionResponse>;
     static scanFromURLAsync(url: string, barCodeTypes?: string[]): Promise<{
         type: string;
         data: string;
@@ -110,9 +118,6 @@ export declare class BarCodeScanner extends React.Component<BarCodeScannerProps>
         collapsable?: any;
         needsOffscreenAlphaCompositing?: any;
         renderToHardwareTextureAndroid?: any;
-        accessibilityViewIsModal?: any;
-        accessibilityActions?: any;
-        onAccessibilityAction?: any;
         shouldRasterizeIOS?: any;
         isTVSelectable?: any;
         hasTVPreferredFocus?: any;
@@ -139,16 +144,20 @@ export declare class BarCodeScanner extends React.Component<BarCodeScannerProps>
         onTouchCancel?: any;
         onTouchEndCapture?: any;
         accessible?: any;
+        accessibilityActions?: any;
         accessibilityLabel?: any;
         accessibilityRole?: any;
-        accessibilityStates?: any;
         accessibilityState?: any;
         accessibilityHint?: any;
+        accessibilityValue?: any;
+        onAccessibilityAction?: any;
         accessibilityComponentType?: any;
         accessibilityLiveRegion?: any;
         importantForAccessibility?: any;
         accessibilityElementsHidden?: any;
         accessibilityTraits?: any;
+        accessibilityViewIsModal?: any;
+        onAccessibilityEscape?: any;
         onAccessibilityTap?: any;
         onMagicTap?: any;
         accessibilityIgnoresInvertColors?: any;
@@ -158,5 +167,4 @@ export declare class BarCodeScanner extends React.Component<BarCodeScannerProps>
 export declare const Constants: {
     BarCodeType: any;
     Type: any;
-};
-export {};
+}, getPermissionsAsync: typeof BarCodeScanner.getPermissionsAsync, requestPermissionsAsync: typeof BarCodeScanner.requestPermissionsAsync;

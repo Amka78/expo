@@ -3,6 +3,7 @@ import mapValues from 'lodash/mapValues';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { Platform, ViewProps, ViewPropTypes } from 'react-native';
+import { PermissionResponse, PermissionStatus } from 'unimodules-permissions-interface';
 
 import ExpoBarCodeScannerModule from './ExpoBarCodeScannerModule';
 import ExpoBarCodeScannerView from './ExpoBarCodeScannerView';
@@ -11,7 +12,7 @@ const { BarCodeType, Type } = ExpoBarCodeScannerModule;
 
 const EVENT_THROTTLE_MS = 500;
 
-type BarCodeEvent = {
+export type BarCodeEvent = {
   type: string;
   data: string;
   [key: string]: any;
@@ -22,6 +23,8 @@ export type BarCodeEventCallbackArguments = {
 };
 
 export type BarCodeScannedCallback = (params: BarCodeEvent) => void;
+
+export { PermissionResponse, PermissionStatus };
 
 export interface BarCodeScannerProps extends ViewProps {
   type?: 'front' | 'back' | number;
@@ -53,6 +56,14 @@ export class BarCodeScanner extends React.Component<BarCodeScannerProps> {
     type: Type.back,
     barCodeTypes: Object.values(BarCodeType),
   };
+
+  static async getPermissionsAsync(): Promise<PermissionResponse> {
+    return ExpoBarCodeScannerModule.getPermissionsAsync();
+  }
+
+  static async requestPermissionsAsync(): Promise<PermissionResponse> {
+    return ExpoBarCodeScannerModule.requestPermissionsAsync();
+  }
 
   static async scanFromURLAsync(
     url: string,
@@ -124,4 +135,4 @@ export class BarCodeScanner extends React.Component<BarCodeScannerProps> {
   }
 }
 
-export const { Constants } = BarCodeScanner;
+export const { Constants, getPermissionsAsync, requestPermissionsAsync } = BarCodeScanner;

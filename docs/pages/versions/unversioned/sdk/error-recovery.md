@@ -1,17 +1,23 @@
 ---
 title: ErrorRecovery
+sourceCodeUrl: 'https://github.com/expo/expo/tree/sdk-36/packages/expo-error-recovery'
 ---
 
-Utilities for helping you gracefully handle crashes due to fatal JavaScript errors.
+import PlatformsSection from '~/components/plugins/PlatformsSection';
+import InstallSection from '~/components/plugins/InstallSection';
+
+This module provides utilities for helping you gracefully handle crashes due to fatal JavaScript errors.
+
+<PlatformsSection android emulator ios simulator web />
 
 ## Installation
 
-This API is pre-installed in [managed](../../introduction/managed-vs-bare/#managed-workflow) apps. It is not available to [bare](../../introduction/managed-vs-bare/#bare-workflow) React Native apps.
+<InstallSection packageName="expo-error-recovery" />
 
 ## API
 
 ```js
-import { ErrorRecovery } from 'expo';
+import * as ErrorRecovery from 'expo-error-recovery';
 ```
 
 ### `ErrorRecovery.setRecoveryProps(props)`
@@ -20,6 +26,6 @@ Set arbitrary error recovery props. If your project crashes in production as a r
 
 #### Arguments
 
--   **props (_object_)** -- An object which will be passed to your reloaded project's initial props if the project was reloaded as a result of a fatal JS error.
+- **props (_object_)** -- An object which will be passed to your reloaded project's initial props if the project was reloaded as a result of a fatal JS error.
 
 #

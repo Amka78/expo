@@ -1,5 +1,6 @@
-import { Platform } from 'react-native';
 import { UnavailabilityError } from '@unimodules/core';
+import { Platform } from 'react-native';
+import { PermissionStatus } from 'unimodules-permissions-interface';
 import ExpoBrightness from './ExpoBrightness';
 export var BrightnessMode;
 (function (BrightnessMode) {
@@ -7,6 +8,7 @@ export var BrightnessMode;
     BrightnessMode[BrightnessMode["AUTOMATIC"] = 1] = "AUTOMATIC";
     BrightnessMode[BrightnessMode["MANUAL"] = 2] = "MANUAL";
 })(BrightnessMode || (BrightnessMode = {}));
+export { PermissionStatus };
 export async function getBrightnessAsync() {
     if (!ExpoBrightness.getBrightnessAsync) {
         throw new UnavailabilityError('expo-brightness', 'getBrightnessAsync');
@@ -17,7 +19,7 @@ export async function setBrightnessAsync(brightnessValue) {
     if (!ExpoBrightness.setBrightnessAsync) {
         throw new UnavailabilityError('expo-brightness', 'setBrightnessAsync');
     }
-    let clampedBrightnessValue = Math.max(0, Math.min(brightnessValue, 1));
+    const clampedBrightnessValue = Math.max(0, Math.min(brightnessValue, 1));
     if (isNaN(clampedBrightnessValue)) {
         throw new TypeError(`setBrightnessAsync cannot be called with ${brightnessValue}`);
     }
@@ -30,7 +32,7 @@ export async function getSystemBrightnessAsync() {
     return await ExpoBrightness.getSystemBrightnessAsync();
 }
 export async function setSystemBrightnessAsync(brightnessValue) {
-    let clampedBrightnessValue = Math.max(0, Math.min(brightnessValue, 1));
+    const clampedBrightnessValue = Math.max(0, Math.min(brightnessValue, 1));
     if (isNaN(clampedBrightnessValue)) {
         throw new TypeError(`setSystemBrightnessAsync cannot be called with ${brightnessValue}`);
     }
@@ -62,5 +64,11 @@ export async function setSystemBrightnessModeAsync(brightnessMode) {
         return;
     }
     return await ExpoBrightness.setSystemBrightnessModeAsync(brightnessMode);
+}
+export async function getPermissionsAsync() {
+    return ExpoBrightness.getPermissionsAsync();
+}
+export async function requestPermissionsAsync() {
+    return ExpoBrightness.requestPermissionsAsync();
 }
 //# sourceMappingURL=Brightness.js.map

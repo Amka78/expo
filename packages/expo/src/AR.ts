@@ -386,7 +386,7 @@ export enum TrackingStateReason {
   Relocalizing = 'ARTrackingStateReasonRelocalizing',
 }
 
-type FrameDidUpdateEvent = {};
+type FrameDidUpdateEvent = object;
 
 type DidFailWithErrorEvent = { error: Error };
 
@@ -400,9 +400,9 @@ type CameraDidChangeTrackingStateEvent = {
   trackingStateReason: TrackingStateReason;
 };
 
-type SessionWasInterruptedEvent = {};
+type SessionWasInterruptedEvent = object;
 
-type SessionInterruptionEndedEvent = {};
+type SessionInterruptionEndedEvent = object;
 
 export function getVersion(): string {
   return ExponentAR.ARKitVersion;
@@ -528,7 +528,7 @@ export async function startAsync(
   node: ReactNativeNodeHandle | React.Component,
   configuration: TrackingConfiguration
 ): Promise<ARStartResult> {
-  let handle = typeof node === 'number' ? node : _getNodeHandle(node);
+  const handle = typeof node === 'number' ? node : _getNodeHandle(node);
   if (ExponentAR.startAsync) {
     return await ExponentAR.startAsync(handle, configuration);
   }
@@ -536,7 +536,7 @@ export async function startAsync(
 }
 
 function _getNodeHandle(component: React.Component): ReactNativeNodeHandle {
-  let handle = findNodeHandle(component);
+  const handle = findNodeHandle(component);
   if (handle === null) {
     throw new Error(`Could not find the React node handle for the AR component: ${component}`);
   }

@@ -1,4 +1,5 @@
 import { EventEmitter, UnavailabilityError } from '@unimodules/core';
+import { setTestDeviceIDAsync } from './AdMob';
 import AdMobNativeModule from './ExpoAdsAdMobInterstitialManager';
 const moduleName = 'AdMobInterstitial';
 const eventNames = [
@@ -21,10 +22,8 @@ export default {
         await AdMobNativeModule.setAdUnitID(id);
     },
     async setTestDeviceID(id) {
-        if (!AdMobNativeModule.setTestDeviceID) {
-            throw new UnavailabilityError(moduleName, 'setTestDeviceID');
-        }
-        await AdMobNativeModule.setTestDeviceID(id);
+        console.warn('AdMobInterstitial.setTestDeviceID is deprecated. Test device IDs are now set globally. Use AdMob.setTestDeviceIDAsync instead.');
+        await setTestDeviceIDAsync(id);
     },
     async requestAdAsync(options = {}) {
         if (!AdMobNativeModule.requestAd) {

@@ -3,13 +3,13 @@
 import React from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import InfiniteScrollView from 'react-native-infinite-scroll-view';
-import { withNavigation } from 'react-navigation';
+import { useTheme, withNavigation } from 'react-navigation';
 
 import Colors from '../constants/Colors';
-import SnackCard from './SnackCard';
+import SnackListItem from './SnackListItem';
 
 @withNavigation
-export default class ProjectList extends React.PureComponent {
+class SnackList extends React.PureComponent {
   state = {
     isReady: false,
     isRefetching: false,
@@ -52,6 +52,8 @@ export default class ProjectList extends React.PureComponent {
   };
 
   _renderContent = () => {
+    let { theme } = this.props;
+
     return (
       <FlatList
         data={this.props.data.snacks}
@@ -59,7 +61,11 @@ export default class ProjectList extends React.PureComponent {
         renderItem={this._renderItem}
         renderLoadingIndicator={() => <View />}
         renderScrollComponent={props => <InfiniteScrollView {...props} />}
-        style={[{ flex: 1 }, !this.props.belongsToCurrentUser && styles.largeProjectCardList]}
+        style={[
+          { flex: 1 },
+          !this.props.belongsToCurrentUser && styles.largeProjectCardList,
+          { backgroundColor: theme === 'dark' ? '#000' : Colors.light.greyBackground },
+        ]}
         canLoadMore={this._canLoadMore()}
         onLoadMoreAsync={this._handleLoadMoreAsync}
       />
@@ -99,17 +105,21 @@ export default class ProjectList extends React.PureComponent {
 
   _renderItem = ({ item: snack, index }) => {
     return (
-      <SnackCard
+      <SnackListItem
         key={index.toString()}
-        projectName={snack.name}
-        slug={snack.slug}
-        projectUrl={snack.fullName}
-        description={snack.description}
-        fullWidthBorder
+        url={snack.fullName}
+        title={snack.name}
+        subtitle={snack.description}
       />
     );
   };
 }
+
+export default props => {
+  let theme = useTheme();
+
+  return <SnackList {...props} theme={theme} />;
+};
 
 const styles = StyleSheet.create({
   largeProjectCardList: {

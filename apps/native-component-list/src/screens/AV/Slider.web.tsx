@@ -126,9 +126,6 @@ class Slider extends PureComponent<Props, State> {
       allMeasured: false,
       value: new Animated.Value(props.value),
     };
-  }
-
-  componentWillMount() {
     this._panResponder = PanResponder.create({
       onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
       onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
@@ -140,14 +137,12 @@ class Slider extends PureComponent<Props, State> {
     });
   }
 
-  componentWillReceiveProps(nextProps: Props) {
-    const newValue = nextProps.value;
-
-    if (this.props.value !== newValue) {
+  componentDidUpdate(prevProps: Props, _prevState: State) {
+    if (this.props.value !== prevProps.value) {
       if (this.props.animateTransitions) {
-        this._setCurrentValueAnimated(newValue);
+        this._setCurrentValueAnimated(this.props.value);
       } else {
-        this._setCurrentValue(newValue);
+        this._setCurrentValue(this.props.value);
       }
     }
   }
@@ -202,8 +197,7 @@ class Slider extends PureComponent<Props, State> {
         />
         <View
           style={[defaultStyles.touchArea, touchOverflowStyle]}
-          {...this._panResponder!.panHandlers}
-        >
+          {...this._panResponder!.panHandlers}>
           {debugTouchArea === true && this._renderDebugThumbTouchRect(thumbLeft)}
         </View>
       </View>
@@ -215,19 +209,25 @@ class Slider extends PureComponent<Props, State> {
     return otherProps;
   }
 
-  _handleStartShouldSetPanResponder = (e: GestureResponderEvent, gestureState: PanResponderGestureState): boolean => {
+  _handleStartShouldSetPanResponder = (
+    e: GestureResponderEvent,
+    gestureState: PanResponderGestureState
+  ): boolean => {
     // Should we become active when the user presses down on the thumb?
     return this._thumbHitTest(e);
-  }
+  };
 
-  _handleMoveShouldSetPanResponder(e: GestureResponderEvent, gestureState: PanResponderGestureState): boolean {
+  _handleMoveShouldSetPanResponder(
+    e: GestureResponderEvent,
+    gestureState: PanResponderGestureState
+  ): boolean {
     // Should we become active when the user moves a touch over the thumb?
     return false;
   }
 
   _handlePanResponderGrant = (e: GestureResponderEvent, gestureState: PanResponderGestureState) => {
     this._previousLeft = this._getThumbLeft(this._getCurrentValue());
-  }
+  };
 
   _handlePanResponderMove = (e: GestureResponderEvent, gestureState: PanResponderGestureState) => {
     if (this.props.disabled) {
@@ -236,7 +236,7 @@ class Slider extends PureComponent<Props, State> {
 
     this._setCurrentValue(this._getValue(gestureState));
     this._fireChangeEvent('onValueChange');
-  }
+  };
 
   _handlePanResponderRequestEnd(e: GestureResponderEvent, gestureState: PanResponderGestureState) {
     // Should we allow another component to take over this pan?
@@ -250,19 +250,19 @@ class Slider extends PureComponent<Props, State> {
 
     this._setCurrentValue(this._getValue(gestureState));
     this._fireChangeEvent('onSlidingComplete');
-  }
+  };
 
   _measureContainer = (x: LayoutChangeEvent) => {
     this._handleMeasure('containerSize', x);
-  }
+  };
 
   _measureTrack = (x: LayoutChangeEvent) => {
     this._handleMeasure('trackSize', x);
-  }
+  };
 
   _measureThumb = (x: LayoutChangeEvent) => {
     this._handleMeasure('thumbSize', x);
-  }
+  };
 
   _handleMeasure = (name: string, x: LayoutChangeEvent) => {
     const { width, height } = x.nativeEvent.layout;
@@ -283,16 +283,16 @@ class Slider extends PureComponent<Props, State> {
         allMeasured: true,
       });
     }
-  }
+  };
 
   _getRatio = (value: number) => {
     return (value - this.props.minimumValue) / (this.props.maximumValue - this.props.minimumValue);
-  }
+  };
 
   _getThumbLeft = (value: number) => {
     const ratio = this._getRatio(value);
     return ratio * (this.state.containerSize.width - this.state.thumbSize.width);
-  }
+  };
 
   _getValue = (gestureState: PanResponderGestureState) => {
     const length = this.state.containerSize.width - this.state.thumbSize.width;
@@ -321,16 +321,16 @@ class Slider extends PureComponent<Props, State> {
         )
       );
     }
-  }
+  };
 
   _getCurrentValue = () => {
     // @ts-ignore
     return this.state.value.__getValue();
-  }
+  };
 
   _setCurrentValue = (value: number) => {
     this.state.value.setValue(value);
-  }
+  };
 
   _setCurrentValueAnimated = (value: number) => {
     const animationType = this.props.animationType;
@@ -342,13 +342,13 @@ class Slider extends PureComponent<Props, State> {
     );
 
     Animated[animationType](this.state.value, animationConfig).start();
-  }
+  };
 
   _fireChangeEvent = (event: 'onValueChange' | 'onSlidingComplete') => {
     if (this.props[event]) {
       this.props[event](this._getCurrentValue());
     }
-  }
+  };
 
   _getTouchOverflowSize = () => {
     const { allMeasured, thumbSize, containerSize } = this.state;
@@ -360,7 +360,7 @@ class Slider extends PureComponent<Props, State> {
     }
 
     return size;
-  }
+  };
 
   _getTouchOverflowStyle = () => {
     const { width, height } = this._getTouchOverflowSize();
@@ -382,13 +382,13 @@ class Slider extends PureComponent<Props, State> {
     }
 
     return touchOverflowStyle;
-  }
+  };
 
   _thumbHitTest = (e: GestureResponderEvent) => {
     const nativeEvent = e.nativeEvent;
     const thumbTouchRect = this._getThumbTouchRect();
     return thumbTouchRect.containsPoint(nativeEvent.locationX, nativeEvent.locationY);
-  }
+  };
 
   _getThumbTouchRect = () => {
     const { thumbSize, containerSize } = this.state;
@@ -402,7 +402,7 @@ class Slider extends PureComponent<Props, State> {
       THUMB_TOUCH_SIZE,
       THUMB_TOUCH_SIZE
     );
-  }
+  };
 
   _renderDebugThumbTouchRect = (thumbLeft: Animated.AnimatedInterpolation) => {
     const thumbTouchRect = this._getThumbTouchRect();
@@ -419,7 +419,7 @@ class Slider extends PureComponent<Props, State> {
         style={[defaultStyles.debugThumbTouchArea, positionStyle]}
       />
     );
-  }
+  };
 }
 
 const defaultStyles = StyleSheet.create({

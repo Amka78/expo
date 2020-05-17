@@ -1,5 +1,6 @@
 ---
 title: Payments
+sourceCodeUrl: "https://github.com/expo/expo/tree/sdk-35/packages/expo-payments-stripe"
 ---
 
 Expo includes support for payments through [Stripe](https://stripe.com/) and [Apple Pay](https://www.apple.com/apple-pay/) on iOS via ExpoKit, and Stripe on Android (plus Android Pay via ExpoKit).
@@ -16,6 +17,12 @@ from `'expo-payments-stripe'` use the following code:
 import { DangerZone } from 'expo';
 const { Stripe } = DangerZone;
 ```
+
+#### Platform Compatibility
+
+| Android Device | Android Emulator | iOS Device | iOS Simulator |  Web  |
+| ------ | ---------- | ------ | ------ | ------ |
+| ✅     |  ❌     | ✅     | ❌     | ❌    |
 
 ## Setup
 
@@ -41,7 +48,7 @@ target 'your-project-name' do
   ...
 ```
 
-Finally, make sure [CocoaPods](https://cocoapods.org/) is installed and run `pod install` in `your-project-name/ios`. This will add the Payments module files to your project and the corresponding dependencies.
+Finally run `npx pod-install`, this will add the Payments module files to your project and the corresponding dependencies.
 
 ### Register hook in order to let Stripe process source authorization
 
@@ -96,7 +103,7 @@ implementation project(':expo-payments-stripe')
     allprojects {
       repositories {
         ...
-        maven { url "https://jitpack.io" }
+        maven { url "https://www.jitpack.io" }
         ...
       }
     }

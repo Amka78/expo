@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationEvents } from 'react-navigation';
 import { Button, Platform, StyleSheet, Text, View } from 'react-native';
 
-import { ScreenOrientation } from 'expo';
+import * as ScreenOrientation from 'expo-screen-orientation';
 
 import * as Svg from 'react-native-svg';
 import * as Permissions from 'expo-permissions';
@@ -106,6 +106,7 @@ export default class BarcodeScannerExample extends React.Component<{}, State> {
             BarCodeScanner.Constants.BarCodeType.qr,
             BarCodeScanner.Constants.BarCodeType.pdf417,
             BarCodeScanner.Constants.BarCodeType.code128,
+            BarCodeScanner.Constants.BarCodeType.code39,
           ]}
           type={this.state.type}
           style={styles.preview}

@@ -2,17 +2,11 @@ import groovy.json.JsonSlurper
 
 apply from: '../../../node_modules/react-native-unimodules/gradle.groovy'
 
-include ':react-native-gesture-handler'
-project(':react-native-gesture-handler').projectDir = new File(rootProject.projectDir, '../../../node_modules/react-native-gesture-handler/android')
+apply from: file("../../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle");
+applyNativeModulesSettingsGradle(settings)
 
-include ':react-native-reanimated'
-project(':react-native-reanimated').projectDir = new File(rootProject.projectDir, '../../../node_modules/react-native-reanimated/android')
-
-include ':react-native-screens'
-project(':react-native-screens').projectDir = new File(rootProject.projectDir, '../../../node_modules/react-native-screens/android')
-
-include ':react-native-safe-area-context'
-project(':react-native-safe-area-context').projectDir = new File(rootProject.projectDir, '../../../node_modules/react-native-safe-area-context/android')
+include(":expo-image")
+project(":expo-image").projectDir = new File("../../../packages/expo-image/android")
 
 // Unimodules
 
@@ -24,11 +18,11 @@ def excludedUnimodules = packageJson.excludedUnimodules != null ? packageJson.ex
 
 // Include unimodules.
 includeUnimodulesProjects(
-        modulesPaths : [
-                '../../../../packages',
-        ],
-        configuration: 'api',
-        target       : 'react-native',
+    modulesPaths : [
+        '../../../../packages',
+    ],
+    configuration: 'api',
+    target       : 'react-native',
 // [Custom] Remove `expo-task-manager` which doesn't work on Android
 // "expo-task-manager",
 // "unimodules-task-manager-interface",
@@ -50,7 +44,7 @@ includeUnimodulesProjects(
 // [Custom] Remove non-unimodules
 // "expo-video-thumbnails",
 // "expo-module-template"
-        exclude      : excludedUnimodules
+     exclude      : excludedUnimodules
 )
 
 rootProject.name = 'BareExpo'

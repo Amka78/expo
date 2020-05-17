@@ -1,14 +1,40 @@
 ---
 title: Permissions
+sourceCodeUrl: 'https://github.com/expo/expo/tree/sdk-36/packages/expo-permissions'
 ---
 
-When it comes to adding functionality that can access potentially sensitive information on a user's device, such as their location, or possibly send them possibly unwanted push notifications, you will need to ask the user for their permission first. Unless you've already asked their permission, then no need. And so we have the `Permissions` module.
+import InstallSection from '~/components/plugins/InstallSection';
+import PlatformsSection from '~/components/plugins/PlatformsSection';
 
-If you are deploying your app to the Apple iTunes Store, you should consider adding additional metadata to your app in order to customize the system permissions dialog and explain why your app requires permissions. See more info in the [App Store Deployment Guide](../../distribution/app-stores/#system-permissions-dialogs-on-ios).
+When it comes to adding functionality that can access potentially sensitive information on a user's device, such as their location, or possibly send them possibly unwanted push notifications, you will need to ask the user for their permission first. Unless you've already asked their permission, then no need. And so we have the **`expo-permissions`** module.
+
+If you are deploying your app to the Apple iTunes Store, you must add additional metadata to your app in order to customize the system permissions dialog, and more importantly, explain why your app requires permissions. **Without this explanation, your app may be rejected from the App Store.** See more info in the [App Store Deployment Guide](../../distribution/app-stores/#system-permissions-dialogs-on-ios).
+
+<PlatformsSection android emulator ios simulator web />
 
 ## Installation
 
-For [managed](../../introduction/managed-vs-bare/#managed-workflow) apps, you'll need to run `expo install expo-permissions`. To use it in a [bare](../../introduction/managed-vs-bare/#bare-workflow) React Native app, follow its [installation instructions](https://github.com/expo/expo/tree/master/packages/expo-permissions).
+<InstallSection packageName="expo-permissions" />
+
+### Usage in bare workflow
+
+`expo-permissions` includes the shared infrastructure for handling system permissions, it does not include the code specific to particular permissions. For example, if you want to use the `CAMERA_ROLL` permission, you need to install `expo-image-picker` or `expo-media-library`.
+
+The following table shows you which permissions correspond to which packages.
+
+| Permission type             | Packages                                  |
+| --------------------------- | ----------------------------------------- |
+| `NOTIFICATIONS`             | `expo-permissions`                        |
+| `USER_FACING_NOTIFICATIONS` | `expo-permissions`                        |
+| `LOCATION`                  | `expo-location`                           |
+| `CAMERA`                    | `expo-camera`, `expo-barcode-scanner`     |
+| `AUDIO_RECORDING`           | `expo-av`                                 |
+| `CONTACTS`                  | `expo-contacts`                           |
+| `CAMERA_ROLL`               | `expo-image-picker`, `expo-media-library` |
+| `CALENDAR`                  | `expo-calendar`                           |
+| `REMINDERS`                 | `expo-calendar`                           |
+| `SYSTEM_BRIGHTNESS`         | `expo-brightness`                         |
+| `MOTION`                    | `expo-sensors`                            |
 
 ## Usage
 
@@ -32,9 +58,11 @@ Determines whether your app has already been granted access to the provided perm
 
 #### Returns
 
-Returns a `Promise` that is resolved with the information about the permissions, including status, expiration and scope (if it applies to the permission type).
-Top-level `status` and `expires` keys stores combined info of each component permission that is asked for.
-If any permission resulted in a negative result, then that negative result is propagated here; that means top-level values are positive only if all component values are positive.
+A `Promise` that is resolved with information about the permissions, including status, expiration, and scope (if applicable).
+The top-level `status`, `expires` and `canAskAgain` keys are a reduction of the values from each individual permission.
+If all single permissions have a `status` of `'denied'`, then that the top level `status` is `denied`; in other words, the top-level `status` is `'granted'` if and only if all of the individual permissions are `'granted'`. Otherwise, `status` is`undetermined`.
+If any single permission has a `status` different then `granted`, then top-level `granted` is `false`. Otherwise, it is `true`.
+Top-level `expires` has value of the earliest expirated permission.
 
 Examples `[...componentsValues] => topLevelStatus`:
 
@@ -45,10 +73,14 @@ Examples `[...componentsValues] => topLevelStatus`:
 {
   status, // combined status of all component permissions being asked for, if any of has status !== 'granted' then that status is propagated here
   expires, // combined expires of all permissions being asked for, same as status
+  canAskAgain,
+  granted,
   permissions: { // an object with an entry for each permission requested
     [Permissions.TYPE]: {
       status,
       expires,
+      canAskAgain,
+      granted,
       ... // any additional permission-specific fields
     },
     ...
@@ -72,7 +104,7 @@ async function checkMultiPermissions() {
     Permissions.CONTACTS
   );
   if (status !== 'granted') {
-    alert('Hey! You heve not enabled selected permissions');
+    alert('Hey! You have not enabled selected permissions');
   }
 }
 ```
@@ -170,7 +202,11 @@ The permission type for reading or writing reminders.
 
 ### `Permissions.SYSTEM_BRIGHTNESS`
 
-The permissions type for changing brighness of the screen
+The permissions type for changing brightness of the screen
+
+### `Permissions.MOTION`
+
+The permission for accessing `DeviceMotion` and `DeviceOrientation` in the web browser. This can only be requested from a website using HTTPS (`expo web --https`). This permission cannot be silently retrieved, you can only request it. This permission can only be requested with a user interaction i.e. a button press.
 
 ## Android: permissions equivalents inside `app.json`
 
@@ -188,3 +224,15 @@ In order to request permissions in a standalone Android app (Managed Workflow on
 For example, if your app asks for `AUDIO_RECORDING` permission at runtime but no other permissions, you should set `android.permissions` to `["RECORD_AUDIO"]` in `app.json`.
 
 > **Note:** If you don't specify `android.permissions` inside your `app.json`, by default your standalone Android app will require all of the permissions listed above.
+
+## Types
+
+### `PermissionResponse`
+
+| Field name  | Type                       | Description                                                                                                                                                                                    |
+| ----------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| status      | _string_                   | Permission status with possible values: `granted`, `denied`, `undetermined`.                                                                                                                   |
+| granted     | _boolean_                  | Boolean value meaning whether the permission is granted or not.                                                                                                                                |
+| canAskAgain | _boolean_                  | Boolean value determining if it's possible to request permission again. It's `false` if the user selected `don't ask again` option on Android or `don't allow` on iOS. Otherwise, it's `true`. |
+| ios         | depends on permission type | Additional detail on iOS (**optional**)                                                                                                                                                        |
+| android     | depends on permission type | Additional detail on Android (**optional**)                                                                                                                                                    |

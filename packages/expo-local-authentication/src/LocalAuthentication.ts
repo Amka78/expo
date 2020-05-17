@@ -4,12 +4,12 @@ import { Platform } from 'react-native';
 
 import ExpoLocalAuthentication from './ExpoLocalAuthentication';
 import {
-  AuthOptions,
+  LocalAuthenticationOptions,
   AuthenticationType,
   LocalAuthenticationResult,
 } from './LocalAuthentication.types';
 
-export { AuthenticationType, LocalAuthenticationResult };
+export { LocalAuthenticationOptions, AuthenticationType, LocalAuthenticationResult };
 
 export async function hasHardwareAsync(): Promise<boolean> {
   if (!ExpoLocalAuthentication.hasHardwareAsync) {
@@ -33,7 +33,7 @@ export async function isEnrolledAsync(): Promise<boolean> {
 }
 
 export async function authenticateAsync(
-  options: AuthOptions = { promptMessage: 'Authenticate' }
+  options: LocalAuthenticationOptions = {}
 ): Promise<LocalAuthenticationResult> {
   if (!ExpoLocalAuthentication.authenticateAsync) {
     throw new UnavailabilityError('expo-local-authentication', 'authenticateAsync');
@@ -48,12 +48,15 @@ export async function authenticateAsync(
   }
 
   if (Platform.OS === 'ios') {
-    invariant(
-      typeof options.promptMessage === 'string' && options.promptMessage.length,
-      'LocalAuthentication.authenticateAsync must be called with a non-empty `options.promptMessage` string on iOS'
-    );
+    if (options.hasOwnProperty('promptMessage')) {
+      invariant(
+        typeof options.promptMessage === 'string' && options.promptMessage.length,
+        'LocalAuthentication.authenticateAsync : `options.promptMessage` must be a non-empty string.'
+      );
+    }
 
-    const result = await ExpoLocalAuthentication.authenticateAsync(options);
+    const promptMessage = options.promptMessage || 'Authenticate';
+    const result = await ExpoLocalAuthentication.authenticateAsync({ ...options, promptMessage });
 
     if (result.warning) {
       console.warn(result.warning);

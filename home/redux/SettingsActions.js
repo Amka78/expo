@@ -1,42 +1,20 @@
-import * as Kernel from '../kernel/Kernel';
+import * as DevMenu from '../menu/DevMenuModule';
 import LocalStorage from '../storage/LocalStorage';
 
 export default {
   loadSettings() {
     return async dispatch => {
-      const settings = await LocalStorage.getSettingsAsync();
-
-      if (settings && settings.legacyMenuGesture) {
-        try {
-          await Kernel.setLegacyMenuBehaviorEnabledAsync(true);
-        } catch (_) {}
-      }
+      const [localStorageSettings, devMenuSettings] = await Promise.all([
+        LocalStorage.getSettingsAsync(),
+        DevMenu.getSettingsAsync(),
+      ]);
 
       return dispatch({
         type: 'loadSettings',
-        payload: settings,
-      });
-    };
-  },
-
-  setIsLegacyMenuBehaviorEnabled(useLegacyGesture) {
-    return async dispatch => {
-      let finalGestureSetting = useLegacyGesture;
-      try {
-        await Promise.all([
-          Kernel.setLegacyMenuBehaviorEnabledAsync(useLegacyGesture),
-          LocalStorage.updateSettingsAsync({
-            legacyMenuGesture: useLegacyGesture,
-          }),
-        ]);
-      } catch (e) {
-        alert('Oops, something went wrong and we were unable to change the gesture type!');
-        finalGestureSetting = !useLegacyGesture;
-      }
-
-      return dispatch({
-        type: 'setIsLegacyMenuBehaviorEnabled',
-        payload: { legacyMenuGesture: finalGestureSetting },
+        payload: {
+          ...localStorageSettings,
+          devMenuSettings,
+        },
       });
     };
   },
@@ -56,6 +34,21 @@ export default {
         });
       } catch (e) {
         alert('Oops, something went wrong and we were unable to change the preferred appearance');
+      }
+    };
+  },
+
+  setDevMenuSetting(key, value) {
+    return async dispatch => {
+      try {
+        await DevMenu.setSettingAsync(key, value);
+
+        return dispatch({
+          type: 'setDevMenuSettings',
+          payload: { [key]: value },
+        });
+      } catch (e) {
+        alert('Oops, something went wrong and we were unable to change dev menu settings!');
       }
     };
   },

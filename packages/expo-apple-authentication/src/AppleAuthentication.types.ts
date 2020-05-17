@@ -30,6 +30,11 @@ export type AppleAuthenticationSignInOptions = {
    * avoid replay attacks.
    */
   state?: string;
+
+  /**
+   * Data that is used to verify the uniqueness of a response and prevent replay attacks.
+   */
+  nonce?: string;
 };
 
 /**
@@ -208,6 +213,10 @@ export enum AppleAuthenticationUserDetectionStatus {
 export enum AppleAuthenticationButtonType {
   SIGN_IN = 0,
   CONTINUE = 1,
+  /**
+   * Requires iOS 13.2 or later.
+   */
+  SIGN_UP = 2,
 }
 
 /**

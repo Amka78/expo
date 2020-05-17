@@ -5,18 +5,14 @@ import com.facebook.react.bridge.ReactApplicationContext;
 
 import org.json.JSONObject;
 import org.unimodules.adapters.react.ModuleRegistryAdapter;
-import org.unimodules.adapters.react.ModuleRegistryReadyNotifier;
-import org.unimodules.adapters.react.NativeModulesProxy;
 import org.unimodules.adapters.react.ReactModuleRegistryProvider;
 import org.unimodules.core.ModuleRegistry;
 import org.unimodules.core.interfaces.InternalModule;
 import org.unimodules.core.interfaces.RegistryLifecycleListener;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import host.exp.exponent.ExponentManifest;
 import host.exp.exponent.kernel.ExperienceId;
 import host.exp.exponent.utils.ScopedContext;
 import versioned.host.exp.exponent.modules.universal.av.SharedCookiesDataSourceFactoryProvider;
@@ -46,9 +42,6 @@ public class ExpoModuleRegistryAdapter extends ModuleRegistryAdapter implements 
     moduleRegistry.registerInternalModule(new ScopedRotationVectorSensorService(experienceId));
     moduleRegistry.registerInternalModule(new SharedCookiesDataSourceFactoryProvider());
 
-    // Overriding expo-permissions/PermissionsService -- binding checks with kernel services
-    moduleRegistry.registerInternalModule(new PermissionsServiceBinding(scopedContext, experienceId));
-
     // Overriding expo-constants/ConstantsService -- binding provides manifest and other expo-related constants
     moduleRegistry.registerInternalModule(new ConstantsBinding(scopedContext, experienceProperties, manifest));
 
@@ -58,8 +51,20 @@ public class ExpoModuleRegistryAdapter extends ModuleRegistryAdapter implements 
     // Overriding expo-file-system FileSystemModule
     moduleRegistry.registerExportedModule(new ScopedFileSystemModule(scopedContext));
 
-    // Add SpongyCastle integration
-    moduleRegistry.registerExportedModule(new SecureStoreModuleBinding(scopedContext));
+    // Overriding expo-error-recovery ErrorRecoveryModule
+    moduleRegistry.registerExportedModule(new ScopedErrorRecoveryModule(scopedContext, manifest, experienceId));
+
+    // Overriding expo-permissions ScopedPermissionsService
+    moduleRegistry.registerInternalModule(new ScopedPermissionsService(scopedContext, experienceId));
+
+    // Overriding expo-facebook
+    moduleRegistry.registerExportedModule(new ScopedFacebookModule(scopedContext, manifest));
+
+    // Scoping Amplitude
+    moduleRegistry.registerExportedModule(new ScopedAmplitudeModule(scopedContext, experienceId));
+
+    // Overriding expo-firebase-core
+    moduleRegistry.registerInternalModule(new ScopedFirebaseCoreService(scopedContext, manifest, experienceId));
 
     // ReactAdapterPackage requires ReactContext
     ReactApplicationContext reactContext = (ReactApplicationContext) scopedContext.getContext();
@@ -68,7 +73,7 @@ public class ExpoModuleRegistryAdapter extends ModuleRegistryAdapter implements 
     }
 
     // Overriding ScopedUIManagerModuleWrapper from ReactAdapterPackage
-    moduleRegistry.registerInternalModule(new ScopedUIManagerModuleWrapper(reactContext, experienceId, manifest.optString(ExponentManifest.MANIFEST_NAME_KEY)));
+    moduleRegistry.registerInternalModule(new ScopedUIManagerModuleWrapper(reactContext));
 
     // Adding other modules (not universal) to module registry as consumers.
     // It allows these modules to refer to universal modules.

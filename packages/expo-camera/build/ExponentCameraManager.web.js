@@ -1,3 +1,5 @@
+import CameraModule from './CameraModule/CameraModule';
+import { canGetUserMedia } from './CameraModule/UserMediaManager';
 export default {
     get name() {
         return 'ExponentCameraManager';
@@ -34,6 +36,9 @@ export default {
     get VideoQuality() {
         return {};
     },
+    async isAvailableAsync() {
+        return canGetUserMedia();
+    },
     // TODO: Bacon: Is video possible?
     // record(options): Promise
     // stopRecording(): Promise<void>
@@ -41,10 +46,13 @@ export default {
         return await camera.takePicture(options);
     },
     async pausePreview(camera) {
-        camera.pausePreview();
+        await camera.pausePreview();
     },
     async resumePreview(camera) {
         return await camera.resumePreview();
+    },
+    async getAvailableCameraTypesAsync() {
+        return await CameraModule.getAvailableCameraTypesAsync();
     },
     async getAvailablePictureSizes(ratio, camera) {
         return await camera.getAvailablePictureSizes(ratio);

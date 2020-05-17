@@ -10,6 +10,7 @@ import Environment from '../utils/Environment';
 
 import QRCodeButton from './QRCodeButton';
 import OpenFromClipboardButton from './OpenFromClipboardButton';
+import ListItem from '../components/ListItem';
 
 const CLIPBOARD_POLL_INTERVAL = 2000;
 
@@ -21,7 +22,9 @@ function clipboardMightBeOpenable(str: string): boolean {
   // @username/experience
   if (str.match(/^@\w+\/\w+/)) {
     return true;
-  } else if (str.match(/^exp:\/\//)) {
+  } else if (str.startsWith('exp://')) {
+    return true;
+  } else if (str.startsWith('https://expo.io') || str.startsWith('https://exp.host')) {
     return true;
   }
 
@@ -46,17 +49,14 @@ export default class ProjectTools extends React.Component {
 
   _clipboardUpdateInterval: ?number = null;
 
-  componentWillMount() {
-    this._fetchClipboardContentsAsync();
-  }
-
   componentDidMount() {
     this._startPollingClipboard();
+    this._fetchClipboardContentsAsync();
     AppState.addEventListener('change', this._maybeResumePollingFromAppState);
   }
 
-  componentWillReceiveProps(nextProps: Props) {
-    this._maybeUpdatePollingState(nextProps);
+  componentDidUpdate(_prevProps: Props) {
+    this._maybeUpdatePollingState(this.props);
   }
 
   componentWillUnmount() {
@@ -66,19 +66,18 @@ export default class ProjectTools extends React.Component {
   }
 
   render() {
-    let { clipboardContents, displayOpenClipboardButton } = this.state;
+    const { clipboardContents, displayOpenClipboardButton } = this.state;
     const shouldDisplayQRCodeButton = Constants.isDevice && !Environment.IsIOSRestrictedBuild;
-
+    const shouldDisplayClipboardButton = !Constants.isDevice;
     return (
-      <View style={{ marginBottom: 15 }}>
-        {shouldDisplayQRCodeButton ? (
-          <QRCodeButton fullWidthBorder={!displayOpenClipboardButton} />
-        ) : null}
-        <OpenFromClipboardButton
-          clipboardContents={clipboardContents}
-          isValid={displayOpenClipboardButton}
-          fullWidthBorder
-        />
+      <View>
+        {shouldDisplayQRCodeButton && <QRCodeButton last={!shouldDisplayClipboardButton} />}
+        {shouldDisplayClipboardButton && (
+          <OpenFromClipboardButton
+            clipboardContents={clipboardContents}
+            isValid={displayOpenClipboardButton}
+          />
+        )}
       </View>
     );
   }
@@ -87,7 +86,7 @@ export default class ProjectTools extends React.Component {
     let clipboardContents = await Clipboard.getString();
 
     if (clipboardContents !== this.state.clipboardContents) {
-      requestIdleCallback(() => {
+      requestAnimationFrame(() => {
         this.setState({
           clipboardContents,
           displayOpenClipboardButton: clipboardMightBeOpenable(clipboardContents),

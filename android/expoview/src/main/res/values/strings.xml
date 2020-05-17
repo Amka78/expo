@@ -1,6 +1,5 @@
 <resources>
   <string name="app_name">Exponent</string>
-  <string name="dev_activity_name">Exponent Dev</string>
   <string name="info_activity_name">Info</string>
   <string name="info_app_name_placeholder">App Name</string>
   <string name="info_sdk_version">SDK Version: %s</string>
@@ -31,7 +30,8 @@
   <string name="perm_camera">accessing camera</string>
   <string name="perm_camera_roll_read">reading camera roll</string>
   <string name="perm_camera_roll_write">modifying camera roll</string>
-  <string name="perm_contacts">reading contacts</string>
+  <string name="perm_contacts_read">reading contacts</string>
+  <string name="perm_contacts_write">modifying contacts</string>
   <string name="perm_fine_location">fine location</string>
   <string name="perm_coarse_location">coarse location</string>
   <string name="perm_system_brightness">system brightness</string>
@@ -39,6 +39,19 @@
   <string name="persistent_notification_channel_group">Expo</string>
   <string name="persistent_notification_channel_name">Experience notifications</string>
   <string name="persistent_notification_channel_desc">Persistent notifications that provide debug info about open experiences</string>
+  <string name="devmenu_hide_element_inspector">Hide Element Inspector</string>
+  <string name="devmenu_show_element_inspector">Show Element Inspector</string>
+  <string name="devmenu_element_inspector_unavailable">Element Inspector Unavailable</string>
+  <string name="devmenu_stop_remote_debugging">Stop Remote Debugging</string>
+  <string name="devmenu_start_remote_debugging">Debug Remote JS</string>
+  <string name="devmenu_remote_debugger_unavailable">Remote Debugger Unavailable</string>
+  <string name="devmenu_disable_fast_refresh">Disable Fast Refresh</string>
+  <string name="devmenu_enable_fast_refresh">Enable Fast Refresh</string>
+  <string name="devmenu_fast_refresh_unavailable">Fast Refresh Unavailable</string>
+  <string name="devmenu_fast_refresh_unavailable_details">Use the Reload button above to reload when in production mode. Switch back to development mode to use Fast Refresh.</string>
+  <string name="devmenu_hide_performance_monitor">Hide Performance Monitor</string>
+  <string name="devmenu_show_performance_monitor">Show Performance Monitor</string>
+  <string name="devmenu_performance_monitor_unavailable">Performance Monitor Unavailable</string>
 
   <string-array name="currency_array">
       <item>Currency (optional)</item>

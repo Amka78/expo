@@ -18,11 +18,12 @@ public class VersionedUtils {
         .addPackage(new ExponentPackage(
                 instanceManagerBuilderProperties.experienceProperties,
                 instanceManagerBuilderProperties.manifest,
+                // DO NOT EDIT THIS COMMENT - used by versioning scripts
                 // When distributing change the following two arguments to nulls
                 instanceManagerBuilderProperties.expoPackages,
                 instanceManagerBuilderProperties.exponentPackageDelegate,
                 instanceManagerBuilderProperties.singletonModules))
-        .setInitialLifecycleState(LifecycleState.RESUMED);
+        .setInitialLifecycleState(LifecycleState.BEFORE_CREATE);
 
     if (instanceManagerBuilderProperties.jsBundlePath != null && instanceManagerBuilderProperties.jsBundlePath.length() > 0) {
       builder = builder.setJSBundleFile(instanceManagerBuilderProperties.jsBundlePath);

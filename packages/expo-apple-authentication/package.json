@@ -1,6 +1,6 @@
 {
   "name": "expo-apple-authentication",
-  "version": "1.0.0",
+  "version": "2.1.1",
   "description": "A unimodule that provides SignIn With Apple",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -29,14 +29,18 @@
   },
   "author": "650 Industries, Inc.",
   "license": "MIT",
-  "homepage": "https://github.com/expo/expo/tree/master/packages/expo-apple-authentiocation",
+  "homepage": "https://github.com/expo/expo/tree/master/packages/expo-apple-authentication",
+  "unimodulePeerDependencies": {
+    "@unimodules/core": "*",
+    "@unimodules/react-native-adapter": "*"
+  },
   "peerDependencies": {
-    "@unimodules/core": "~3.0.0",
-    "@unimodules/react-native-adapter": "~3.0.0"
+    "react": "*",
+    "react-native": "*"
   },
   "dependencies": {},
   "devDependencies": {
-    "expo-module-scripts": "~1.1.1"
+    "expo-module-scripts": "~1.2.0"
   },
-  "gitHead": "4e13b3cb88d9205f14bee7764038ab2dd9ef1fbd"
+  "gitHead": "ec7998e573483e31acc25e52cb31a0df8c0a6784"
 }

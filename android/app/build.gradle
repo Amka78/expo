@@ -1,20 +1,10 @@
 buildscript {
   repositories {
     google()
-    maven { url 'https://maven.fabric.io/public' }
-  }
-
-  dependencies {
-    classpath 'io.fabric.tools:gradle:1.31.0'
   }
 }
 apply plugin: 'com.android.application'
-apply plugin: 'io.fabric'
 apply plugin: 'devicefarm'
-
-repositories {
-  maven { url 'https://maven.fabric.io/public' }
-}
 
 def safeExtGet(prop, fallback) {
   rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
@@ -34,8 +24,8 @@ android {
     targetSdkVersion safeExtGet("targetSdkVersion", 28)
     // ADD VERSIONS HERE
     // BEGIN VERSIONS
-    versionCode 117
-    versionName '2.12.2'
+    versionCode 124
+    versionName '2.15.1'
     // END VERSIONS
 
     multiDexEnabled true
@@ -63,7 +53,6 @@ android {
   buildTypes {
     debug {
       debuggable true
-      ext.enableCrashlytics = false
     }
     release {
       minifyEnabled true
@@ -116,17 +105,16 @@ dependencies {
   implementation 'androidx.multidex:multidex:2.0.0'
 
   // Our dependencies
-  implementation 'androidx.appcompat:appcompat:1.0.0'
+  implementation 'androidx.appcompat:appcompat:1.1.0'
 
   // Our dependencies from ExpoView
   // DON'T ADD ANYTHING HERE THAT ISN'T IN EXPOVIEW. ONLY COPY THINGS FROM EXPOVIEW TO HERE.
-  implementation 'androidx.appcompat:appcompat:1.0.0'
-  implementation 'com.facebook.android:facebook-android-sdk:5.0.1'
+  implementation 'androidx.appcompat:appcompat:1.1.0'
   implementation('com.facebook.android:audience-network-sdk:5.1.1') {
     exclude module: 'play-services-ads'
   }
   compileOnly 'org.glassfish:javax.annotation:3.1.1'
-  implementation 'com.jakewharton:butterknife:9.0.0'
+  implementation 'com.jakewharton:butterknife:10.2.0'
   implementation 'de.greenrobot:eventbus:2.4.0'
 
   implementation 'com.squareup.picasso:picasso:2.5.2'
@@ -135,8 +123,6 @@ dependencies {
   implementation 'com.google.android.gms:play-services-maps:15.0.1'
   implementation 'com.google.android.gms:play-services-auth:15.0.1'
   implementation 'com.google.android.gms:play-services-location:15.0.1'
-  implementation "com.madgag.spongycastle:core:1.53.0.0"
-  implementation "com.madgag.spongycastle:prov:1.53.0.0"
   debugImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta1'
   // debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.4-beta1'
   releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta1'
@@ -181,7 +167,7 @@ dependencies {
   testImplementation 'org.mockito:mockito-core:1.10.19'
 
   /* UNCOMMENT WHEN DISTRIBUTING
-  implementation('host.exp.exponent:expoview:35.0.0@aar') {
+  implementation('host.exp.exponent:expoview:37.0.0@aar') {
     transitive = true
     exclude group: 'com.squareup.okhttp3', module: 'okhttp'
     exclude group: 'com.squareup.okhttp3', module: 'okhttp-urlconnection'
@@ -199,6 +185,15 @@ dependencies {
   // ADD_NEW_SDKS_HERE
 
 
+  // BEGIN_SDK_37
+  implementation(project(':expoview-abi37_0_0'))
+  // END_SDK_37
+
+  // BEGIN_SDK_36
+  implementation(project(':expoview-abi36_0_0'))
+  // END_SDK_36
+
+
   // BEGIN_SDK_35
   implementation(project(':expoview-abi35_0_0'))
   // END_SDK_35
@@ -207,20 +202,15 @@ dependencies {
   implementation(project(':expoview-abi34_0_0'))
   // END_SDK_34
 
-  // BEGIN_SDK_33
-  implementation(project(':expoview-abi33_0_0'))
-  // END_SDK_33
-
   // This is not needed in shell apps, the Amplitude module will include this dep if installed
-  // Be careful when upgrading! Upgrading might break experience scoping. See Analytics.resetAmplitudeDatabaseHelper
-  implementation 'com.amplitude:android-sdk:2.9.2'
+  implementation 'com.amplitude:android-sdk:2.23.2'
 
   // WHEN_PREPARING_SHELL_REMOVE_TO_HERE
   // WHEN_DISTRIBUTING_REMOVE_TO_HERE
 
   /* UNCOMMENT WHEN DISTRIBUTING
   api 'org.webkit:android-jsc:r245459' // needs to be before react-native
-  api 'com.facebook.react:react-native:33.0.0'
+  api 'com.facebook.react:react-native:+'
   END UNCOMMENT WHEN DISTRIBUTING */
 
   // WHEN_DETACHING_REMOVE_FROM_HERE
@@ -235,8 +225,10 @@ dependencies {
         'expo-module-template',
         'expo-bluetooth',
         'expo-in-app-purchases',
+        'expo-notifications',
         'expo-payments-stripe',
-        'expo-updates'
+        'expo-updates',
+        'expo-splash-screen'
       ]
   ])
   END UNCOMMENT WHEN DISTRIBUTING */

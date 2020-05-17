@@ -1,27 +1,18 @@
-import PropTypes from 'prop-types';
-import React from 'react';
-import { ColorPropType, View, ViewPropTypes, processColor } from 'react-native';
+import * as React from 'react';
+import { Platform, processColor, View } from 'react-native';
 
 import NativeLinearGradient from './NativeLinearGradient';
 
-type Props = {
+export type LinearGradientProps = {
   colors: string[];
   locations?: number[] | null;
-  start?: Point | null;
-  end?: Point | null;
+  start?: LinearGradienPoint | null;
+  end?: LinearGradienPoint | null;
 } & React.ComponentProps<typeof View>;
 
-type Point = { x: number; y: number } | [number, number];
+export type LinearGradienPoint = { x: number; y: number } | [number, number];
 
-export default class LinearGradient extends React.Component<Props> {
-  static propTypes = {
-    ...ViewPropTypes,
-    colors: PropTypes.arrayOf(ColorPropType).isRequired,
-    locations: PropTypes.arrayOf(PropTypes.number),
-    start: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.number), PropTypes.object]),
-    end: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.number), PropTypes.object]),
-  };
-
+export default class LinearGradient extends React.Component<LinearGradientProps> {
   render() {
     let { colors, locations, start, end, ...props } = this.props;
 
@@ -33,7 +24,10 @@ export default class LinearGradient extends React.Component<Props> {
     return (
       <NativeLinearGradient
         {...props}
-        colors={colors.map(processColor)}
+        colors={Platform.select({
+          web: colors as any,
+          default: colors.map(processColor),
+        })}
         locations={locations}
         startPoint={_normalizePoint(start)}
         endPoint={_normalizePoint(end)}
@@ -42,7 +36,9 @@ export default class LinearGradient extends React.Component<Props> {
   }
 }
 
-function _normalizePoint(point: Point | null | undefined): [number, number] | undefined {
+function _normalizePoint(
+  point: LinearGradienPoint | null | undefined
+): [number, number] | undefined {
   if (!point) {
     return undefined;
   }

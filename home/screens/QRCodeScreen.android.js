@@ -9,26 +9,21 @@ import Layout from '../constants/Layout';
 
 export default class BarCodeScreen extends React.Component {
   static navigationOptions = {
-    header: null,
+    headerShown: false,
   };
 
   state = {
     scannerIsVisible: false,
   };
 
-  _hasOpenedUrl: boolean;
-  _isMounted: boolean;
-
-  componentWillMount() {
-    this._hasOpenedUrl = false;
-
-    setTimeout(() => {
-      this.setState({ scannerIsVisible: true });
-    }, 800);
-  }
+  _hasOpenedUrl = false;
+  _isMounted = false;
 
   componentDidMount() {
     this._isMounted = true;
+    setTimeout(() => {
+      this.setState({ scannerIsVisible: true });
+    }, 800);
   }
 
   componentWillUnmount() {
@@ -66,7 +61,7 @@ export default class BarCodeScreen extends React.Component {
           </TouchableOpacity>
         </View>
 
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="light-content" backgroundColor="#000" />
       </View>
     );
   }

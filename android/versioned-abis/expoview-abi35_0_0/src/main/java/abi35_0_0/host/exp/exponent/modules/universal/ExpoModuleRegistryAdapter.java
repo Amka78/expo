@@ -58,8 +58,7 @@ public class ExpoModuleRegistryAdapter extends ModuleRegistryAdapter implements 
     // Overriding expo-file-system FileSystemModule
     moduleRegistry.registerExportedModule(new ScopedFileSystemModule(scopedContext));
 
-    // Add SpongyCastle integration
-    moduleRegistry.registerExportedModule(new SecureStoreModuleBinding(scopedContext));
+    moduleRegistry.registerExportedModule(new ScopedAmplitudeModule(scopedContext, experienceId));
 
     // ReactAdapterPackage requires ReactContext
     ReactApplicationContext reactContext = (ReactApplicationContext) scopedContext.getContext();

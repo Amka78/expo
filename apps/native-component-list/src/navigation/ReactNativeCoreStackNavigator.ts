@@ -1,16 +1,13 @@
-import BasicMaskExample from '../screens/BasicMaskScreen';
-import GLMaskExample from '../screens/MaskGLScreen';
-import ReactNativeCore from '../screens/ReactNativeCoreScreen';
+import ReactNativeCore from '../screens/ReactNativeCore/ReactNativeCoreScreen';
 import createStackNavigator from './createStackNavigator';
 import StackConfig from './StackConfig';
+import SafeAreaNavigationWrapper from './SafeAreaNavigationWrapper';
 
 const ReactNativeCoreStackNavigator = createStackNavigator(
   {
     ReactNativeCore,
-    BasicMaskExample,
-    GLMaskExample,
   },
   StackConfig
 );
 
-export default ReactNativeCoreStackNavigator;
+export default SafeAreaNavigationWrapper(ReactNativeCoreStackNavigator);

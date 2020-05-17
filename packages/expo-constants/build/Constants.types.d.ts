@@ -30,7 +30,9 @@ export interface AppManifest {
     sdkVersion?: string;
     version?: string;
     /** Published Apps Only */
+    releaseId?: string;
     revisionId?: string;
+    releaseChannel?: string;
     orientation?: string;
     primaryColor?: string;
     icon?: string;
@@ -86,8 +88,8 @@ export interface NativeConstants {
     deviceName?: string;
     deviceYearClass: number | null;
     experienceUrl: string;
-    expoRuntimeVersion: string;
-    expoVersion: string;
+    expoRuntimeVersion: string | null;
+    expoVersion: string | null;
     isDetached?: boolean;
     intentUri?: string;
     installationId: string;

@@ -3,13 +3,13 @@ id: panresponder
 title: PanResponder
 ---
 
-`PanResponder` reconciles several touches into a single gesture. It makes single-touch gestures resilient to extra touches, and can be used to recognize simple multi-touch gestures.
+`PanResponder` reconciles several touches into a single gesture. It makes single-touch gestures resilient to extra touches, and can be used to recognize basic multi-touch gestures.
 
 By default, `PanResponder` holds an `InteractionManager` handle to block long-running JS events from interrupting active gestures.
 
 It provides a predictable wrapper of the responder handlers provided by the [gesture responder system](../gesture-responder-system/). For each handler, it provides a new `gestureState` object alongside the native event object:
 
-```javascript
+```js
 onPanResponderMove: (event, gestureState) => {};
 ```
 
@@ -41,7 +41,7 @@ A `gestureState` object has the following:
 
 ### Basic Usage
 
-```javascript
+```js
 class ExampleComponent extends Component {
   constructor(props) {
     super(props);
@@ -89,10 +89,6 @@ class ExampleComponent extends Component {
 
 To see it in action, try the [PanResponder example in RNTester](https://github.com/facebook/react-native/blob/master/RNTester/js/examples/PanResponder/PanResponderExample.js)
 
-### Methods
-
-- [`create`](../panresponder/#create)
-
 ---
 
 # Reference
@@ -101,13 +97,19 @@ To see it in action, try the [PanResponder example in RNTester](https://github.c
 
 ### `create()`
 
-```javascript
+```js
 
 static create(config)
 
 ```
 
-@param {object} config Enhanced versions of all of the responder callbacks that provide not only the typical `ResponderSyntheticEvent`, but also the `PanResponder` gesture state. Simply replace the word `Responder` with `PanResponder` in each of the typical `onResponder*` callbacks. For example, the `config` object would look like:
+**Parameters:**
+
+| Name   | Type   | Required | Description |
+| ------ | ------ | -------- | ----------- |
+| config | object | Yes      | Refer below |
+
+The config object provides enhanced versions of all of the responder callbacks that provide not only the typical `ResponderSyntheticEvent`, but also the `PanResponder` gesture state, by replacing the word `Responder` with `PanResponder` in each of the typical `onResponder*` callbacks. For example, the `config` object would look like:
 
 - `onMoveShouldSetPanResponder: (e, gestureState) => {...}`
 - `onMoveShouldSetPanResponderCapture: (e, gestureState) => {...}`

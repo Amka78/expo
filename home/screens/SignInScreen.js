@@ -20,7 +20,7 @@ const DEBUG = false;
 export default class SignInScreen extends React.Component {
   static navigationOptions = {
     title: 'Sign In',
-    headerLeft: <CloseButton />,
+    headerLeft: () => <CloseButton />,
   };
 
   static getDataProps(data) {
@@ -51,8 +51,8 @@ export default class SignInScreen extends React.Component {
     this._isMounted = false;
   }
 
-  componentWillReceiveProps(nextProps: Object) {
-    const hasNewUserSession = nextProps.session.sessionSecret && !this.props.session.sessionSecret;
+  componentDidUpdate(prevProps: Object) {
+    const hasNewUserSession = this.props.session.sessionSecret && !prevProps.session.sessionSecret;
     if (hasNewUserSession) {
       TextInput.State.blurTextInput(TextInput.State.currentlyFocusedField());
       this.props.navigation.pop();

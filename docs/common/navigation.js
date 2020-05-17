@@ -1,49 +1,222 @@
-const {
-  ROOT,
-  GROUPS,
-  ESSENTIALS,
-  INTRODUCTION,
-  FUNDAMENTALS,
-  GUIDES,
-  DISTRIBUTION,
-  EXPOKIT,
-  REACT_NATIVE,
-} = require('./sidebar-navigation-order');
-const navigation = require('./navigation-data');
 const packageVersion = require('../package.json').version;
+const prevaledNavigationData = require('./navigation-data');
+
+// Groups of sections
+// - Each section is a top-level folder within the version directory
+// - The groups of sections are expressed only below, there is no representation of them in the filesystem
+const GROUPS = {
+  'The Basics': ['Conceptual Overview', 'Get Started', 'Tutorial', 'Next Steps'],
+  'Managed Workflow': ['Fundamentals', 'Distributing Your App', 'Assorted Guides'],
+  Deprecated: ['ExpoKit'],
+  'Bare Workflow': ['Essentials'],
+  'Expo SDK': ['Expo SDK'],
+  'React Native': ['React Native'],
+};
+
+// This array provides the ordering for pages within each section
+const sections = [
+  {
+    name: 'Get Started',
+    reference: ['Installation', 'Create a new app'],
+  },
+  {
+    name: 'Conceptual Overview',
+    reference: [
+      'Workflows',
+      'Walkthrough',
+      'Limitations',
+      'Frequently asked questions',
+      'Common Questions',
+    ],
+  },
+  {
+    name: 'Tutorial',
+    reference: [
+      'First steps',
+      'Styling text',
+      'Adding an image',
+      'Creating a button',
+      'Picking an image',
+      'Sharing the image',
+      'Handling platform differences',
+      'Configuring a splash screen and app icon',
+      'Learning more',
+    ],
+  },
+  {
+    name: 'Next Steps',
+    reference: ['Using the documentation', 'Join the community', 'Additional resources'],
+  },
+  {
+    name: 'Assorted Guides',
+    reference: [
+      'Assets',
+      'Icons',
+      'Using Custom Fonts',
+      'Routing & Navigation',
+      'Authentication',
+      'App Icons',
+      'Create a Splash Screen',
+      'Configuring StatusBar',
+      'Configuring OTA Updates',
+      'Preloading & Caching Assets',
+      'Offline Support',
+      'Progressive Web Apps',
+      'Customizing Metro',
+      'Customizing Webpack',
+      'Push Notifications',
+      'Using FCM for Push Notifications',
+      'Notification Channels',
+      'Error Handling',
+      'Testing with Jest',
+      'Account Permissions',
+      'Using TypeScript',
+      'Using Modern JavaScript',
+      'Using ClojureScript',
+      'Using Firebase',
+      'Using GraphQL',
+      'Using Sentry',
+      'Using Bugsnag',
+      'User Interface Component Libraries',
+      'Crafting Educational Materials',
+      'Custom Fonts',
+    ],
+  },
+  {
+    name: 'Distributing Your App',
+    reference: [
+      'Overview',
+      'Building Standalone Apps',
+      'App signing',
+      'Deploying to App Stores',
+      'Release Channels',
+      'Advanced Release Channels',
+      'Hosting An App on Your Servers',
+      'Building Standalone Apps on Your CI',
+      'Uploading Apps to the Apple App Store and Google Play',
+      'App Transfers',
+      'Security',
+    ],
+  },
+  {
+    name: 'ExpoKit',
+    reference: [
+      'Overview',
+      'Detaching to ExpoKit',
+      'Ejecting to ExpoKit',
+      'Developing With ExpoKit',
+      'Advanced ExpoKit Topics',
+      'Universal Modules and ExpoKit',
+    ],
+  },
+  {
+    name: 'Fundamentals',
+    reference: [
+      'Managed Workflow Walkthrough',
+      'Up and Running',
+      'Expo CLI',
+      'Using Libraries',
+      'Viewing Logs',
+      'Development and Production Mode',
+      'iOS Simulator',
+      'Android Studio Emulator',
+      'Debugging',
+      'Common Development Errors',
+      'Configuration with app.json',
+      'Publishing',
+      'Release Channels',
+      'Building Standalone Apps',
+      'Developing for Web',
+      'Upgrading Expo SDK Walkthrough',
+      'Linking',
+      'How Expo Works',
+      'Ejecting to Bare Workflow',
+      'Glossary of terms',
+      'exp Command-Line Interface',
+    ],
+  },
+  {
+    name: 'Essentials',
+    reference: [
+      'Bare Workflow Walkthrough',
+      'Up and Running',
+      'Using Libraries',
+      'Existing Apps',
+      'Supported Expo SDK APIs',
+      'Using Expo client',
+      'Using Expo for web',
+      'Ejecting from Managed Workflow',
+      'Migrating from ExpoKit',
+      'Updating your App',
+    ],
+  },
+  {
+    name: 'React Native',
+    reference: [
+      'Accessibility',
+      'ActionSheetIOS',
+      'Alert',
+      'AlertIOS',
+      'Animated',
+      'AppState',
+      'AsyncStorage',
+      'BackHandler',
+      'Clipboard',
+      'DatePickerAndroid',
+      'Dimensions',
+      'Easing',
+      'InteractionManager',
+      'Keyboard',
+      'LayoutAnimation',
+      'PanResponder',
+      'PixelRatio',
+      'Share',
+      'StyleSheet',
+      'TimePickerAndroid',
+      'ToastAndroid',
+      'Transforms',
+      'Vibration',
+    ],
+  },
+];
+
+// Order of sections (mapped from directory names in navigation-data.js DIR_MAPPING)
+// TODO(brentvatne): this doesn't make too much sense because of higher level groupings, should
+// move this logic to GROUPS instead
+const ROOT = [
+  'Get Started',
+  'Tutorial',
+  'Conceptual Overview',
+  'Fundamentals',
+  'Distributing Your App',
+  'Assorted Guides',
+  'Essentials',
+  'Expo SDK',
+  'React Native',
+  'ExpoKit',
+];
 
 const sortAccordingToReference = (arr, reference) => {
   reference = Array.from(reference).reverse();
 
-  let subSort = (arr, i) => arr.slice(0, i).concat(arr.slice(i).sort());
+  const subSort = (arr, i) => arr.slice(0, i).concat(arr.slice(i).sort());
 
   arr.forEach(category => {
     category.weight = reference.indexOf(category.name) * -1;
   });
 
-  let arrSortedByWeight = arr.sort((a, b) => a.weight - b.weight);
-  return subSort(arrSortedByWeight, arrSortedByWeight.findIndex(o => o.weight === 1));
+  const arrSortedByWeight = arr.sort((a, b) => a.weight - b.weight);
+  return subSort(
+    arrSortedByWeight,
+    arrSortedByWeight.findIndex(o => o.weight === 1)
+  );
 };
-
-const sections = [
-  { name: 'Introduction', reference: INTRODUCTION },
-  { name: 'Guides', reference: GUIDES },
-  { name: 'Distributing Your App', reference: DISTRIBUTION },
-  { name: 'ExpoKit', reference: EXPOKIT },
-  { name: 'Fundamentals', reference: FUNDAMENTALS },
-  { name: 'Essentials', reference: ESSENTIALS },
-  { name: 'React Native', reference: REACT_NATIVE },
-  // { name: 'React Native Basics', reference: REACT_NATIVE_BASICS, },
-  // { name: 'React Native Guides', reference: REACT_NATIVE_GUIDES, },
-  // { name: 'React Native Components', reference: REACT_NATIVE_COMPONENTS, },
-  // { name: 'React Native APIs', reference: REACT_NATIVE_APIS, },
-];
 
 const sortNav = nav => {
   nav = sortAccordingToReference(nav, ROOT);
 
   sections.forEach(({ name, reference }) => {
-    let section = nav.find(o => {
+    const section = nav.find(o => {
       return o.name.toLowerCase() === name.toLowerCase();
     });
     if (section) {
@@ -54,35 +227,30 @@ const sortNav = nav => {
   return nav;
 };
 
+// Get the name of the group that a section belongs to
+function getGroupForSectionName(sectionName) {
+  return Object.keys(GROUPS).find(groupName => GROUPS[groupName].includes(sectionName));
+}
+
 // Yikes, this groups together multiple sections under one heading
 const groupNav = nav => {
-  let sections = [];
-  let groupIndex = {};
+  const sections = [];
+  const groupNameToSectionIndex = {};
   nav.forEach(section => {
-    if (section.name === 'Expo SDK') {
-      let overview;
-      section.posts.forEach(post => {
-        if (post.name === 'Overview') {
-          overview = post;
-        }
-      });
-      if (overview) {
-        section.posts.splice(section.posts.indexOf(overview), 1);
-        section.posts.unshift(overview);
-      }
-    }
-    let group = GROUPS[section.name];
-    if (group) {
-      let existingGroupIndex = groupIndex[group];
-      if (existingGroupIndex) {
-        sections[existingGroupIndex].children.push(section);
+    // If it's grouped then we add it
+    const groupName = getGroupForSectionName(section.name);
+    if (groupName) {
+      if (groupNameToSectionIndex.hasOwnProperty(groupName)) {
+        const existingSectionIndex = groupNameToSectionIndex[groupName];
+        sections[existingSectionIndex].children.push(section);
       } else {
-        groupIndex[group] = sections.length;
+        groupNameToSectionIndex[groupName] = sections.length;
         sections.push({
-          name: group,
+          name: groupName,
           children: [section],
         });
       }
+      // If it's not grouped then it just gets added to the root
     } else {
       sections.push(section);
     }
@@ -91,10 +259,19 @@ const groupNav = nav => {
   return sections;
 };
 
-const sortedNavigation = Object.assign(
-  ...Object.entries(navigation).map(([version, versionNavigation]) => ({
+const sortedReference = Object.assign(
+  ...Object.entries(prevaledNavigationData.reference).map(([version, versionNavigation]) => ({
     [version]: groupNav(sortNav(versionNavigation)),
   }))
 );
 
-module.exports = { ...sortedNavigation, latest: sortedNavigation['v' + packageVersion] };
+const sortedGeneral = groupNav(sortNav(prevaledNavigationData.general));
+const sortedStarting = groupNav(sortNav(prevaledNavigationData.starting));
+
+module.exports = {
+  generalDirectories: prevaledNavigationData.generalDirectories,
+  startingDirectories: prevaledNavigationData.startingDirectories,
+  starting: sortedStarting,
+  general: sortedGeneral,
+  reference: { ...sortedReference, latest: sortedReference['v' + packageVersion] },
+};

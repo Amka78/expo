@@ -1,7 +1,8 @@
-# Contributing to Expo
+# Contributing to the Expo SDK
 
 - [📦 Download and Setup](#-download-and-setup)
-- [✍️ Editing Packages](#-editing-packages)
+- [✍️ Editing SDK Packages](#%EF%B8%8F-editing-sdk-packages)
+  - [Style](#style)
   - [Extra Credit](#extra-credit)
 - [⏱ Testing Your Changes](#-testing-your-changes)
   - [✅ Unit Testing](#-unit-testing)
@@ -11,14 +12,24 @@
 - [🔎 Before Submitting](#-before-submitting)
   - [Extra Credit](#extra-credit-1)
 
-Thanks so much for coming to help! Currently we review PRs for `packages/`, `docs/`, `templates/`, `guides/`, `apps/`, and markdown files. Because the native clients (`ios/`, `android/`) are difficult to setup and require API tokens, not much progress can be made externally (but you can always try!). We've moved most of the fun code out of the client anyways to support the **bare-workflow**; this means that you'll do the majority of your native testing in a bare Expo project.
+Thanks for the help! We currently review PRs for `packages/`, `docs/`, `templates/`, `guides/`, `apps/`, and markdown files.
 
-As you might imagine web code is very easy to test and contribute to, so that's all on the table! You may find that some of the web features you're looking for are actually in the [expo-cli repo](https://github.com/expo/expo-cli).
+Expo for Web code is easy to test and contribute to compared to the native code, and we welcome all contributions to it. You may find that some of the web features you are looking for actually live in the [expo-cli repo](https://github.com/expo/expo-cli).
+
+We recommend that folks interested in contributing to the SDK use the `apps/bare-expo` project in their SDK development workflow instead of the Expo client. The Expo client itself (in the `ios/` and `android/` directories) are difficult to setup and require API tokens.
+
+The `bare-expo` project includes most of the Expo SDK and runs the JavaScript code from `apps/test-suite` to allow you to easily write and run E2E tests for iOS, Android, and web for any given SDK package. Unit tests can be written within the SDK package itself. When pushed to the remote, CI will run this project with Device Farm for Android, Detox for iOS, and Puppeteer for web and report the results on your pull request.
+
+Manual smoke tests are included in `apps/native-component-list`, this is a good fit for demos or tests that require physical interactions. This is particularly useful if you are testing interactions with UI components, or there is something that is very difficult to test in an automated way but would be easy to verify through manual interaction.
+
+> 💡 How does `bare-expo` relate to `test-suite`?
+>
+> `bare-expo` is a bare workflow app that links all of the Expo SDK dependencies in the `packages/` directory in order to be able to run projects in the `apps/` directory in the bare workflow rather than the Expo client. It currently only runs `test-suite`. `test-suite` is a regular managed workflow Expo app with some custom code to turn it into a test runner. If you run `expo start` in the `test-suite` directory you can load the project in Expo client. `bare-expo` imports the `test-suite` app root component and uses it as its own root component.
 
 ## 📦 Download and Setup
 
 1. [Fork](https://help.github.com/articles/fork-a-repo/) this repository to your own GitHub account and then [clone](https://help.github.com/articles/cloning-a-repository/) it to your local device. (`git remote add upstream git@github.com:expo/expo.git` 😉)
-2. Run the setup script with: `npm run setup:native` (if you just want to contribute to the docs, you can run `npm run setup:docs`). This command does the following for you:
+1. Run the setup script with: `npm run setup:native` (if you just want to contribute to the docs, you can run `npm run setup:docs`). This command does the following for you:
 
    <!-- TODO(Bacon): Split this into 2 scripts so people can contribute to docs without installing React Native -->
 
@@ -34,31 +45,34 @@ As you might imagine web code is very easy to test and contribute to, so that's 
    - Web: `yarn web`
    - iOS: `yarn ios`
    - Android: `yarn android`
+5. You are now running the `test-suite` app via the `bare-expo` project. The next section explains how you can begin to make changes to SDK packages.
 
 > If this didn't work for you as described, please [open an issue.](https://github.com/expo/expo/issues/new/choose)
 
-## ✍️ Editing Packages
+## ✍️ Editing SDK Packages
 
-All of our packages (including Foundation Unimodules) can be found in the `packages/` directory. These packages are automatically linked to the projects in the `apps/` directory (meaning any iOS, Android, web, or API changes can be tested from `apps/bare-expo/`). `bare-expo` is a bare workflow Expo app that acts as a runner for the other projects in the `apps/` directory.
+All Expo SDK packages can be found in the `packages/` directory. These packages are automatically linked to the projects in the `apps/` directory, so you can edit them in-place and see the changes in the running app.
 
-- `native-component-list`: This is where you can write demos or tests that require physical interaction (a good playground for testing).
-- `test-suite`: You can write your E2E tests in here. When pushed to the remote, CI will run this project with Device Farm for Android, Detox for iOS, and Puppeteer for web!
-
-All modules should adhere to the style guides which can be found here:
-
-- [Guide to Unimodule Development](guides/Expo%20Universal%20Module%20Infrastructure.md)
-- [Expo JS Style Guide](guides/Expo%20JavaScript%20Style%20Guide.md) (also mostly applies to TypeScript)
-
+ <!-- (meaning any iOS, Android, web, or API changes can be tested from `apps/bare-expo/`). -->
 1. Navigate to a package you want to edit. Ex: `cd packages/expo-constants`
 2. Start the TypeScript build in watch mode: `yarn build`
 3. Edit code in that package's `src/` directory
 4. Play with your changes on a simulator or device through `bare-expo`:
    - Add or modify a file named after the API you're working on. Ex: `apps/test-suite/tests/Constants.js`
-   - Run the code from the `bare-expo` project with `yarn <android | ios | web>` or test the code with `yarn test:<ios | web>`
+   - To see native changes, you will need to run the `test-suite` with the `apps/bare-expo` project using `yarn <android | ios | web>`.
+   - If you are only making JavaScript changes, you can run `test-suite` from the `apps/test-suite` project using `expo start`.
+   - To run the full test suite with Puppeteer or Detox, you can run the tests `yarn test:<ios | web>`.
 5. You can edit a package's native code directly from its respective folder in the `packages/` directory or by opening `bare-expo` in a native editor:
    - Android Studio: `yarn edit:android`
    - Xcode: `yarn edit:ios`
    - Remember to **rebuild** the native project whenever you make a native change
+
+### Style
+
+All modules should adhere to the style guides which can be found here:
+
+- [Guide to Unimodule Development](guides/Expo%20Universal%20Module%20Infrastructure.md)
+- [Expo JS Style Guide](guides/Expo%20JavaScript%20Style%20Guide.md) (also mostly applies to TypeScript)
 
 ### Extra Credit
 
@@ -76,8 +90,9 @@ The best way to get your changes merged is to build good tests for them! We have
 ### ✅ Unit Testing
 
 1. Create a test for your feature in the appropriate package's `src/__tests__` directory (if the file doesn't exist already, create it with the `*-test.ts` or `*-test.tsx` extension).
-2. Run the test with `yarn test` and ensure it handles all platforms (iOS, Android, and web). If the feature doesn't support a platform, then you can exclude it by putting your test in a file with a platform extension like: `-test.ios.ts`, `-test.native.ts`, `-test.web.ts`...
-3. You can also test platforms one at a time by pressing `X` and selecting the platform you want to test!
+2. Any new bridged native functions have to be added to the [jest-expo](https://github.com/expo/expo/blob/master/packages/jest-expo/src/preset/expoModules.js) package to ensure they are mocked. To help you do this more easily, we've written a tool and a guide on how to do this. Check out [Generating Jest Mocks](https://github.com/expo/expo/blob/master/guides/Generating%20Jest%20Mocks.md)!
+3. Run the test with `yarn test` and ensure it handles all platforms (iOS, Android, and web). If the feature doesn't support a platform, then you can exclude it by putting your test in a file with a platform extension like: `-test.ios.ts`, `-test.native.ts`, `-test.web.ts`...
+4. You can also test platforms one at a time by pressing <kbd>X</kbd> and selecting the platform you want to test!
 
 ### 🏁 E2E Testing
 
@@ -114,7 +129,7 @@ Commit messages are most useful when formatted like so: `[platform][api] Title`.
 
 To help keep CI green, please make sure of the following:
 
-- Remember to add a concise description of the change to [CHANGELOG.md](/CHANGELOG.md). This is especially helpful for breaking changes!
+- Remember to add a concise description of any user-facing changes to `CHANGELOG.md` file in the package you've changed or [root's CHANGELOG.md](/CHANGELOG.md) if your changes don't apply to any package. This is especially helpful for breaking changes!
 - If you modified anything in `packages/`:
   - You transpiled the TypeScript with `yarn build` in the directory of whichever package you modified.
   - Run `yarn lint --fix` to fix the formatting of the code. Ensure that `yarn lint` succeeds without errors or warnings.

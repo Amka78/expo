@@ -1,22 +1,8 @@
 import { canUseDOM } from 'fbjs/lib/ExecutionEnvironment';
-import UAParser from 'ua-parser-js';
-import uuidv4 from 'uuid/v4';
-import { CodedError } from '@unimodules/core';
+import { v4 as uuidv4 } from 'uuid';
 
-import { PlatformManifest, WebManifest, NativeConstants } from './Constants.types';
+import { NativeConstants, PlatformManifest, WebManifest } from './Constants.types';
 
-function getExpoPackage() {
-  try {
-    return require('expo/package.json');
-  } catch (error) {
-    throw new CodedError(
-      'ERR_CONSTANTS',
-      'expoVersion & expoRuntimeVersion require the expo package to be installed.'
-    );
-  }
-}
-
-const parser = new UAParser();
 const ID_KEY = 'EXPO_CONSTANTS_INSTALLATION_ID';
 
 declare var __DEV__: boolean;
@@ -26,6 +12,29 @@ declare var location: Location;
 declare var localStorage: Storage;
 
 const _sessionId = uuidv4();
+
+function getBrowserName(): string | undefined {
+  if (canUseDOM) {
+    const agent = navigator.userAgent.toLowerCase();
+    if (agent.includes('edge')) {
+      return 'Edge';
+    } else if (agent.includes('edg')) {
+      return 'Chromium Edge';
+    } else if (agent.includes('opr') && !!window['opr']) {
+      return 'Opera';
+    } else if (agent.includes('chrome') && !!window['chrome']) {
+      return 'Chrome';
+    } else if (agent.includes('trident')) {
+      return 'IE';
+    } else if (agent.includes('firefox')) {
+      return 'Firefox';
+    } else if (agent.includes('safari')) {
+      return 'Safari';
+    }
+  }
+
+  return undefined;
+}
 
 export default {
   get name(): string {
@@ -52,7 +61,7 @@ export default {
     return _sessionId;
   },
   get platform(): PlatformManifest {
-    return { web: canUseDOM ? UAParser(navigator.userAgent) : undefined };
+    return { web: canUseDOM ? { ua: navigator.userAgent } : undefined };
   },
   get isHeadless(): false {
     return false;
@@ -64,8 +73,8 @@ export default {
   get isDetached(): false {
     return false;
   },
-  get expoVersion(): string {
-    return getExpoPackage().version;
+  get expoVersion(): string | null {
+    return this.manifest.sdkVersion || null;
   },
   get linkingUri(): string {
     if (canUseDOM) {
@@ -75,13 +84,11 @@ export default {
       return '';
     }
   },
-  get expoRuntimeVersion(): string {
-    return getExpoPackage().version;
+  get expoRuntimeVersion(): string | null {
+    return this.expoVersion;
   },
   get deviceName(): string | undefined {
-    const { browser, engine, os: OS } = parser.getResult();
-
-    return browser.name || engine.name || OS.name || undefined;
+    return getBrowserName();
   },
   get nativeAppVersion(): null {
     return null;
